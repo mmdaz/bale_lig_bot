@@ -28,17 +28,26 @@ main_menu_button = [
 def start_bot(bot, update):
     user_peer = update.get_effective_user()
     # TODO check admin and redirect to other function .
-    button_list = [
+    button_list =  [
         TemplateMessageButton("چن تا پین دارم الان ؟؟؟" , "/pin_number", 0),
         TemplateMessageButton("میخوام پین بدم به یکی :)", "/give_pin", 0)
+    ] if user_peer.get_json_object()["id"] != "1314892980" else [
+        TemplateMessageButton("چن تا پین دارم الان ؟؟؟" , "/pin_number", 0),
+        TemplateMessageButton("میخوام پین بدم به یکی :)", "/give_pin", 0),
+        TemplateMessageButton("اضافه کردن به لیگ :", "/add_person", 0),
+        TemplateMessageButton("حذف از لیگ ", "/delete_person", 0)
     ]
 
     bot.send_message(TemplateMessage(Message.START_MESSAGE, btn_list=button_list), user_peer, success_callback=success, failure_callback=failure)
 
     dispatcher.register_conversation_next_step_handler(update, [
-        MessageHandler(TemplateResponseFilter(keywords=["pin_number"]), send_pin_number),
-        MessageHandler(TemplateResponseFilter(keywords=["give_pin"]), give_pin )
+        MessageHandler(TemplateResponseFilter(keywords=["/pin_number"]), send_pin_number),
+        MessageHandler(TemplateResponseFilter(keywords=["/give_pin"]), give_pin ),
+        MessageHandler(TemplateResponseFilter(keywords=["/add_person"]), start_add_conversation),
+        MessageHandler(TemplateResponseFilter(keywords=["/delete_person"]), delete_person)
     ])
+
+
 
 
 @dispatcher.command_handler("/pin_number")
@@ -81,6 +90,9 @@ def get_last_name(bot, update):
     bot.send_message(Message.PERSON_ADDED, user_peer,  success_callback=success, failure_callback=failure)
     start_bot(bot, update)
     dispatcher.finish_conversation(update)
+
+def delete_person(bot, update):
+    pass
 
 
 updater.run()
