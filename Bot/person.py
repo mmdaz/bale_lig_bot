@@ -1,7 +1,7 @@
 
-class Person():
+class Person:
 
-    def __init__(self, first_name, last_name, user_id, access_hash, learning=0, hardworking=0, responsibility=0, teamworking=0, other=0, pins=5):
+    def __init__(self, first_name, last_name, user_id, access_hash, learning=0, hardworking=0, responsibility=0, teamworking=0, product_concern = 0,  other=0, pins=5):
 
 
         self.first_name = str(first_name)
@@ -12,10 +12,20 @@ class Person():
         self.hardworking = int(hardworking)
         self.resposibility = int(responsibility)
         self.teamworking = int(teamworking)
+        self.product_concern = int(product_concern)
         self.other = int(other)
         self.pins = int(pins)
 
 
     def __isadmin__(self):
         pass
+
+
+class Reason:
+
+    def __init__(self, text, pin_name, owner_id):
+
+        self.text = str(text)
+        self.pin_name = str(pin_name)
+        self.owner_id = str(owner_id)
 

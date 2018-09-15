@@ -13,6 +13,7 @@ class Person(Base):
     hardworking = Column(String)
     resposibility = Column(String)
     teamworking = Column(String)
+    product_concern = Column(String)
     other = Column(String)
     pins = Column(Integer)
 
@@ -26,6 +27,7 @@ class Person(Base):
         self.teamworking = person.teamworking
         self.resposibility = person.resposibility
         self.hardworking = person.hardworking
+        self.product_concern = person.product_concern
         self.other = person.other
         self.pins = person.pins
 
@@ -34,4 +36,14 @@ class Person(Base):
             self.first_name, self.last_name, self.user_id, self.access_hash, self.learning, self.teamworking, self.resposibility, self.hardworking, self.other, self.pins
         )
 
-    
+
+class Reason(Base):
+    __tablename__ = "Reasons"
+    id = Column(Integer, primary_key=True)
+    owner_id = Column(String)
+    text = Column(String)
+
+    def __init__(self, reason):
+        self.owner_id = reason.owner_id
+        self.text = reason.text
+
