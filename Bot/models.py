@@ -23,9 +23,9 @@ class Person:
 
 class Reason:
 
-    def __init__(self, text, pin_name, owner_id):
+    def __init__(self, text, pin_type_number, owner_id):
 
         self.text = str(text)
-        self.pin_name = str(pin_name)
+        self.pin_type_number = int(pin_type_number)
         self.owner_id = str(owner_id)
 

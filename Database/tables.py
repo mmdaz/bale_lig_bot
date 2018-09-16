@@ -1,5 +1,6 @@
 from Database.connect import Base
 from sqlalchemy import Column, Integer, String
+from Bot.template_messages import Message
 
 
 class Person(Base):
@@ -10,11 +11,11 @@ class Person(Base):
     first_name = Column(String)
     last_name = Column(String)
     learning = Column(Integer)
-    hardworking = Column(String)
-    resposibility = Column(String)
-    teamworking = Column(String)
-    product_concern = Column(String)
-    other = Column(String)
+    hardworking = Column(Integer)
+    resposibility = Column(Integer)
+    teamworking = Column(Integer)
+    product_concern = Column(Integer)
+    other = Column(Integer)
     pins = Column(Integer)
 
     def __init__(self, person):
@@ -42,8 +43,14 @@ class Reason(Base):
     id = Column(Integer, primary_key=True)
     owner_id = Column(String)
     text = Column(String)
+    pin_name = Column(String)
 
     def __init__(self, reason):
         self.owner_id = reason.owner_id
         self.text = reason.text
+        self.pin_name = (reason.pin_type_number == 1 and Message.LEARNING) or (reason.pin_type_number == 2 and Message.HARDWORKING) or\
+                        (reason.pin_type_number == 3 and Message.RESPONSIBILITI) or (reason.pin_type_number == 4 and Message.TEAMWORKING) or\
+                        (reason.pin_type_number == 5 and Message.PRODUCT_CONCERN) or (reason.pin_type_number == 6 and Message.OTHER)
+
+
 

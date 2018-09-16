@@ -5,7 +5,7 @@ from Bot.template_messages import Message
 from balebot.handlers import MessageHandler
 from balebot.filters import TemplateResponseFilter, TextFilter
 from Database.operations import *
-from Bot.person import Person
+from Bot.models import Person, Reason
 
 
 updater = Updater(token="4da1a22c3bd8f29afcc59fdcc82721c901134f1a", loop=asyncio.get_event_loop())
@@ -42,7 +42,7 @@ def start_bot(bot, update):
 
     dispatcher.register_conversation_next_step_handler(update, [
         MessageHandler(TemplateResponseFilter(keywords=["/pin_number"]), send_pin_number),
-        MessageHandler(TemplateResponseFilter(keywords=["/give_pin"]), give_pin ),
+        MessageHandler(TemplateResponseFilter(keywords=["/give_pin"]), give_pin),
         MessageHandler(TemplateResponseFilter(keywords=["/add_person"]), start_add_conversation),
         MessageHandler(TemplateResponseFilter(keywords=["/delete_person"]), delete_person)
     ])
@@ -59,7 +59,7 @@ def send_pin_number(bot, update):
     start_bot(bot, update)
     dispatcher.finish_conversation(update)
 
-
+@dispatcher.message_handler(TemplateResponseFilter(keywords=["/give_pin"]))
 def give_pin(bot, update):
     user_peer = update.get_effective_user()
     persons_list = get_all_persons()
@@ -70,40 +70,61 @@ def give_pin(bot, update):
 
     bot.send_message(TextMessage(Message.GIVE_PIN_REQ), user_peer, success_callback=success, failure_callback=failure)
     bot.send_message(TextMessage(message_text), user_peer,success_callback=success, failure_callback=failure)
-    dispatcher.register_conversation_next_step_handler(update, MessageHandler(TextFilter(), get_pin_numbers))
+    dispatcher.register_conversation_next_step_handler(update, MessageHandler(TextFilter(), get_person_number))
 
 
 def get_person_number(bot, update):
     user_peer = update.get_effective_user()
     person_number = update.get_effective_message().text
-    # TODO check validation of number : 1)is numeric 2)is not out of bound
+    # TODO check validation of number : 1)is numeric 2)is not out of bound 3)can not give to himself
     dispatcher.set_conversation_data(update, "person_number", person_number)
-    bot.send_message(TextMessage(Message.WHAT_PIN), user_peer, success_callback=success, failure_callback=failure)
     pin_buttons_list = [
         TemplateMessageButton(Message.LEARNING, "/1", 0),
         TemplateMessageButton(Message.HARDWORKING, "/2", 0),
         TemplateMessageButton(Message.RESPONSIBILITI, "/3", 0),
         TemplateMessageButton(Message.TEAMWORKING, "/4", 0),
         TemplateMessageButton(Message.PRODUCT_CONCERN, "/5", 0),
-        TemplateMessageButton(Message.OTHER , "/6", 0)
+        TemplateMessageButton(Message.OTHER, "/6", 0)
     ]
-    bot.send_message(TemplateMessage(TextMessage(Message.WHAT_PIN), pin_buttons_list), user_peer, success_callback=success, failure_callback=failure )
+    bot.send_message(TemplateMessage(Message.WHAT_PIN, pin_buttons_list), user_peer, success_callback=success, failure_callback=failure)
     dispatcher.register_conversation_next_step_handler(update, [
-                                                                MessageHandler(TemplateResponseFilter(["/1"]), get_pin_type(bot, update, 1)),
-                                                                MessageHandler(TemplateResponseFilter(["/2"]), get_pin_type(bot, update, 2)),
-                                                                MessageHandler(TemplateResponseFilter(["/3"]), get_pin_type(bot, update, 3)),
-                                                                MessageHandler(TemplateResponseFilter(["/4"]), get_pin_type(bot, update, 4)),
-                                                                MessageHandler(TemplateResponseFilter(["/5"]), get_pin_type(bot, update, 5)),
-                                                                MessageHandler(TemplateResponseFilter(["/6"]), get_pin_type(bot, update, 6))])
+                                                                MessageHandler(TemplateResponseFilter(["/1"]), get_pin_type),
+                                                                MessageHandler(TemplateResponseFilter(["/2"]), get_pin_type),
+                                                                MessageHandler(TemplateResponseFilter(["/3"]), get_pin_type),
+                                                                MessageHandler(TemplateResponseFilter(["/4"]), get_pin_type),
+                                                                MessageHandler(TemplateResponseFilter(["/5"]), get_pin_type),
+                                                                MessageHandler(TemplateResponseFilter(["/6"]), get_pin_type)
+                                                                ]
+                                                       )
 
 
-def get_pin_type(bot, update, type_number):
+def get_pin_type(bot, update):
     user_peer = update.get_effective_user()
+    pin_type_number = int(update.get_effective_message().text_message[1])
+    dispatcher.set_conversation_data(update, "pin_type_number", pin_type_number)
+    bot.send_message(Message.HOW_MANY_PINS, user_peer, success_callback=success, failure_callback=failure)
+    dispatcher.register_conversation_next_step_handler(update, MessageHandler(TextFilter(), get_numbers_of_pins))
+
+
+def get_numbers_of_pins(bot, update):
+    user_peer = update.get_effective_user()
+    number = int(update.get_effective_message().text)
+    # TODO check the out of bound pins
+    dispatcher.set_conversation_data(update, "numbers", number)
+    bot.send_message(Message.GET_REASON, user_peer, success_callback=success, failure_callback=failure)
+    dispatcher.register_conversation_next_step_handler(update, MessageHandler(TextFilter(), get_reason))
 
 
 def get_reason(bot, update):
-
-    pass
+    user_peer = update.get_effective_user()
+    reason = update.get_effective_message().text
+    id = dispatcher.get_conversation_data(update, "person_number")
+    pin_type = dispatcher.get_conversation_data(update, "pin_type_number")
+    pin_numbers = dispatcher.get_conversation_data(update, "numbers")
+    update_pins(id, pin_type, pin_numbers)
+    save_reason(Reason(reason, pin_type, id))
+    bot.send_message(Message.GIVE_PIN_SUCCESS, user_peer, success_callback=success, failure_callback=failure)
+    dispatcher.finish_conversation(update)
 
 
 

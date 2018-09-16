@@ -15,4 +15,7 @@ class Message:
     TEAMWORKING = "همکاری تیمی"
     OTHER = "سایر"
     PRODUCT_CONCERN = "دغدغه محصول و مشتری"
+    GET_REASON = TextMessage("لطفا دلیل خود را برای این عمل بفرستید ...")
+    HOW_MANY_PINS = TextMessage("چند تا پین میخوای بهش بدی ؟؟ ")
+    GIVE_PIN_SUCCESS = TextMessage("پین  مورد نظر داده شد ... ")
 
