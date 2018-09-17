@@ -18,4 +18,7 @@ class Message:
     GET_REASON = TextMessage("لطفا دلیل خود را برای این عمل بفرستید ...")
     HOW_MANY_PINS = TextMessage("چند تا پین میخوای بهش بدی ؟؟ ")
     GIVE_PIN_SUCCESS = TextMessage("پین  مورد نظر داده شد ... ")
+    END_PINS = TextMessage("پین های شما به اتمام رسیده است ...")
+    WRONG_ANSWER = TextMessage("ورودی اشتباه است لطفا عدد وارد نمایید ...")
+
 
