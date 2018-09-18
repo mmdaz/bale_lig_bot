@@ -17,6 +17,7 @@ class Person(Base):
     product_concern = Column(Integer)
     other = Column(Integer)
     pins = Column(Integer)
+    total_pins = Column(Integer)
 
     def __init__(self, person):
 
@@ -31,6 +32,7 @@ class Person(Base):
         self.product_concern = person.product_concern
         self.other = person.other
         self.pins = person.pins
+        self.total_pins = person.product_concern + person.teamworking + person.other + person.hardworking + person.resposibility + person.learning
 
     def __repr__(self):
         return "<Person(first_name = {}, last_name = {}, user_id = {}, access_hash = {}, learning = {}, teamworking = {}, resposibility = {}, hardworking = {}, other = {}, pins = {} )>".format(
@@ -54,3 +56,9 @@ class Reason(Base):
 
 
 
+
+
+"""
+{"$type":"Group","id":568560388,"accessHash":"-993816927678809060"}
+
+"""

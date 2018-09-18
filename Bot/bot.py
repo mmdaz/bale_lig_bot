@@ -1,3 +1,4 @@
+from balebot.models.base_models import Peer
 from balebot.updater import Updater
 from balebot.models.messages import TemplateMessage, TemplateMessageButton, TextMessage
 import asyncio
@@ -24,18 +25,24 @@ main_menu_button = [
 ]
 
 
+def get_pin_type_from_number(pin_number):
+    return (pin_number == 1 and Message.LEARNING) or (pin_number == 2 and Message.HARDWORKING) or (
+            pin_number == 3 and Message.RESPONSIBILITI) or (pin_number == 4 and Message.TEAMWORKING) or (
+                   pin_number == 5 and Message.PRODUCT_CONCERN) or (pin_number == 6 and Message.OTHER)
+
+
 @dispatcher.command_handler(["/start"])
 def start_bot(bot, update):
     user_peer = update.get_effective_user()
     button_list = [
         TemplateMessageButton("چن تا پین دارم الان ؟؟؟", "/pin_number", 0),
         TemplateMessageButton("میخوام پین بدم به یکی :)", "/give_pin", 0),
-        TemplateMessageButton("ثبت نام :", "/add_person", 0)
+        TemplateMessageButton("ثبت نام ", "/add_person", 0)
     ] if user_peer.get_json_object()["id"] != "1314892980" else [
         TemplateMessageButton("چن تا پین دارم الان ؟؟؟", "/pin_number", 0),
         TemplateMessageButton("میخوام پین بدم به یکی :)", "/give_pin", 0),
         TemplateMessageButton("حذف از لیگ ", "/delete_person", 0),
-        TemplateMessageButton("ثبت نام :", "/add_person", 0)
+        TemplateMessageButton("ثبت نام ", "/add_person", 0)
     ]
 
     bot.send_message(TemplateMessage(Message.START_MESSAGE, btn_list=button_list), user_peer, success_callback=success,
@@ -44,7 +51,7 @@ def start_bot(bot, update):
     dispatcher.register_conversation_next_step_handler(update, [
         MessageHandler(TemplateResponseFilter(keywords=["/pin_number"]), send_pin_number),
         MessageHandler(TemplateResponseFilter(keywords=["/give_pin"]), give_pin),
-        MessageHandler(TemplateResponseFilter(keywords=["/add_person"]), start_add_conversation),
+        MessageHandler(TemplateResponseFilter(keywords=["/add_person"]), start_register_conversation),
         MessageHandler(TemplateResponseFilter(keywords=["/delete_person"]), delete_person)
     ])
 
@@ -53,8 +60,20 @@ def start_bot(bot, update):
 @dispatcher.message_handler(TemplateResponseFilter(keywords=["/pin_number"]))
 def send_pin_number(bot, update):
     user_peer = update.get_effective_user()
-    pin_number = get_pin_numbers(user_peer.get_json_object()["id"])
-    bot.send_message(TextMessage("شما {} تا پین دارید ... ".format(pin_number)), user_peer, success_callback=success,
+    target_person = get_pin_numbers(user_peer.get_json_object()["id"])
+    pin_number = target_person.pins
+    bot.send_message(TextMessage("شما {} تا پین دارید که میتوانید به دیگران بدهید  ... ".format(pin_number)), user_peer,
+                     success_callback=success,
+                     failure_callback=failure)
+
+    pin_detail_message = "تعداد پین های شما در هر قسمت که دریافت کردید :‌" + "\n" + Message.LEARNING + " : {}".format(
+        target_person.learning) + "\n" + Message.HARDWORKING + " :  {}".format(
+        target_person.hardworking) + "\n" + Message.RESPONSIBILITI + " :  {}".format(
+        target_person.resposibility) + "\n" + \
+                         Message.TEAMWORKING + " : {}".format(
+        target_person.teamworking) + "\n" + Message.PRODUCT_CONCERN + " : {}".format(
+        target_person.product_concern) + "\n" + Message.OTHER + " :  {}".format(target_person.other)
+    bot.send_message(TextMessage(pin_detail_message), user_peer, success_callback=success,
                      failure_callback=failure)
     start_bot(bot, update)
     dispatcher.finish_conversation(update)
@@ -139,26 +158,54 @@ def get_numbers_of_pins(bot, update):
 def get_reason(bot, update):
     user_peer = update.get_effective_user()
     reason = update.get_effective_message().text
+    dispatcher.set_conversation_data(update, "reason", reason)
     id = dispatcher.get_conversation_data(update, "person_number")
     pin_type = dispatcher.get_conversation_data(update, "pin_type_number")
     pin_numbers = dispatcher.get_conversation_data(update, "numbers")
     update_pins(id, pin_type, pin_numbers)
+    update_pin_numbers(user_peer.get_json_object()["id"], pin_numbers)
     save_reason(Reason(reason, pin_type, id))
     bot.send_message(Message.GIVE_PIN_SUCCESS, user_peer, success_callback=success, failure_callback=failure)
+    send_report(bot, update)
     dispatcher.finish_conversation(update)
 
 
-@dispatcher.command_handler("/add_person")
-def start_add_conversation(bot, update):
-    # TODO check that one person can not register twice
+def send_report(bot, update):
     user_peer = update.get_effective_user()
-    bot.send_message(Message.GET_FIRST_NAME, user_peer, success_callback=success, failure_callback=failure)
-    bot.send_message(TemplateMessage(Message.BACK_TO_MAIN_MENU, main_menu_button), user_peer, success_callback=success,
-                     failure_callback=failure)
-    dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_first_name),
-                                                                MessageHandler(
-                                                                    TemplateResponseFilter(keywords="/start"),
-                                                                    start_bot)])
+    person = get_person_name_from_user_id(user_peer.get_json_object()["id"])
+    persons_list = dispatcher.get_conversation_data(update, "persons_list")
+    receiver_id = dispatcher.get_conversation_data(update, "person_number")
+
+    for p in persons_list:
+        if p.id == int(receiver_id):
+            receiver_person = p
+    message = "پین دهنده :{} {}".format(person.first_name, person.last_name) + "\n" + "گیرنده :‌ {}  {}".format(
+        receiver_person.first_name, receiver_person.last_name) + "\n" + \
+              "نوع پین :‌{}".format(get_pin_type_from_number(
+                  dispatcher.get_conversation_data(update, "pin_type_number"))) + "\n" + "تعداد پین :{}".format(
+        dispatcher.get_conversation_data(update, "numbers")) + "\n" + "دلیل و توضیحات : {}".format(
+        dispatcher.get_conversation_data(update, "reason"))
+    bot.send_message(TextMessage(message), user_peer, success_callback=success, failure_callback=failure)
+
+
+@dispatcher.command_handler("/add_person")
+@dispatcher.message_handler(TemplateResponseFilter(keywords=["/add_person"]))
+def start_register_conversation(bot, update):
+    user_peer = update.get_effective_user()
+    if check_register_validation(user_peer.get_json_object()["id"]):
+        bot.send_message(Message.GET_FIRST_NAME, user_peer, success_callback=success, failure_callback=failure)
+        bot.send_message(TemplateMessage(Message.BACK_TO_MAIN_MENU, main_menu_button), user_peer,
+                         success_callback=success,
+                         failure_callback=failure)
+        dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_first_name),
+                                                                    MessageHandler(
+                                                                        TemplateResponseFilter(keywords="/start"),
+                                                                        start_bot)])
+    else:
+        bot.send_message(Message.WRONG_ANSWER_FOR_REGISTER, user_peer, success_callback=success,
+                         failure_callback=failure)
+        start_bot(bot, update)
+        dispatcher.finish_conversation(update)
 
 
 def get_first_name(bot, update):
@@ -183,6 +230,19 @@ def get_last_name(bot, update):
     bot.send_message(Message.PERSON_ADDED, user_peer, success_callback=success, failure_callback=failure)
     start_bot(bot, update)
     dispatcher.finish_conversation(update)
+
+
+@dispatcher.command_handler("/report_winner")
+def send_winner_report(bot, update):
+    user_peer = update.get_effective_user()
+    winners = sort_by_all_elements()
+    message = ""
+    for p, i in zip(winners, range(1, len(winners) + 2)):
+        print(p)
+        message += "{})  {} {}  **********  ".format(i, p.first_name, p.last_name) + "تعداد پین : {}".format(p.total_pins) + "\n"
+
+    g_peer = Peer(peer_type="Group", peer_id="568560388", access_hash="-993816927678809060")
+    bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
 
 
 def delete_person(bot, update):

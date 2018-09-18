@@ -5,7 +5,7 @@ from Database.tables import Person, Reason
 def get_pin_numbers(user_id):
     session = session_factory()
     target_person = session.query(Person).filter_by(user_id=user_id).first()
-    return target_person.pins
+    return target_person
 
 
 def save_person(person_from_bot):
@@ -24,10 +24,8 @@ def get_all_persons():
 
 
 def update_pins(id, pin_type, pin_numbers):
-
     session = session_factory()
     target_person = session.query(Person).filter_by(id=id).first()
-    target_person.pins -= pin_numbers
     if pin_type == 1:
         target_person.learning += pin_numbers
     elif pin_type == 2:
@@ -41,6 +39,16 @@ def update_pins(id, pin_type, pin_numbers):
     elif pin_type == 6:
         target_person.other += pin_numbers
 
+    target_person.total_pins = target_person.learning + target_person.resposibility + target_person.hardworking + target_person.teamworking + target_person.other + target_person.product_concern
+
+    session.commit()
+    session.close()
+
+
+def update_pin_numbers(user_id, pin_numbers):
+    session = session_factory()
+    target_person = session.query(Person).filter_by(user_id=user_id).first()
+    target_person.pins -= pin_numbers
     session.commit()
     session.close()
 
@@ -63,7 +71,6 @@ def check_pins_limitation(user_id, pin_numbers):
         session.close()
         return True
 
-    # TODO check validation of number : 1)is numeric 2)is not out of bound 3)can not give to himself
 
 def check_person_validation(user_id, number_input):
     session = session_factory()
@@ -81,16 +88,43 @@ def check_person_validation(user_id, number_input):
 
 def sort_by_all_elements():
     persons = get_all_persons()
-    persons_pins = [p.learning + p.hardworking + p.resposibility + p.teamworking + p.product_concern + p.other for p in persons]
+    persons.sort(key=lambda p: p.total_pins , reverse=True)
+    persons_pins = [p.learning + p.hardworking + p.resposibility + p.teamworking + p.product_concern + p.other for p in
+                    persons]
     sorted_list = [pin for pin in persons_pins]
     sorted_list.sort(reverse=True)
-    print(sorted_list)
-    result_list = [persons[persons_pins.index(sorted_list[0])]]
-    print(result_list)
-    return result_list
+    return persons
 
-def sort_by_special_field():
+
+def sort_by_special_field(pin_type_number):
     persons = get_all_persons()
     # TODO handle all fields
-    persons.sort(key=lambda p: p.other, reverse=True)
-    print(persons)
+    if pin_type_number == 1:
+        persons.sort(key=lambda p: p.other, reverse=True)
+    if pin_type_number == 2:
+        persons.sort(key=lambda p: p.other, reverse=True)
+    if pin_type_number == 2:
+        persons.sort(key=lambda p: p.other, reverse=True)
+    if pin_type_number == 4:
+        persons.sort(key=lambda p: p.other, reverse=True)
+    if pin_type_number == 5:
+        persons.sort(key=lambda p: p.other, reverse=True)
+    if pin_type_number == 6:
+        persons.sort(key=lambda p: p.other, reverse=True)
+
+    return persons
+
+
+def get_person_name_from_user_id(user_id):
+    session = session_factory()
+    target_person = session.query(Person).filter_by(user_id=user_id).first()
+    return target_person
+
+
+def check_register_validation(user_id):
+    session = session_factory()
+    persons_list = get_all_persons()
+    for p in persons_list:
+        if p.user_id == user_id:
+            return False
+    return True
