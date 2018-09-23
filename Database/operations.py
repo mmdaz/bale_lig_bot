@@ -23,6 +23,8 @@ def get_all_persons():
     return persons_list
 
 
+
+
 def update_pins(id, pin_type, pin_numbers):
     session = session_factory()
     target_person = session.query(Person).filter_by(id=id).first()
@@ -96,23 +98,24 @@ def sort_by_all_elements():
     return persons
 
 
-def sort_by_special_field(pin_type_number):
+def sort_by_special_field():
     persons = get_all_persons()
-    # TODO handle all fields
-    if pin_type_number == 1:
-        persons.sort(key=lambda p: p.other, reverse=True)
-    if pin_type_number == 2:
-        persons.sort(key=lambda p: p.other, reverse=True)
-    if pin_type_number == 2:
-        persons.sort(key=lambda p: p.other, reverse=True)
-    if pin_type_number == 4:
-        persons.sort(key=lambda p: p.other, reverse=True)
-    if pin_type_number == 5:
-        persons.sort(key=lambda p: p.other, reverse=True)
-    if pin_type_number == 6:
-        persons.sort(key=lambda p: p.other, reverse=True)
+    persons_list = list(persons)
+    fields = []
+    persons_list.sort(key=lambda p: p.learning, reverse=True)
+    fields.append([p for p in persons_list])
+    persons_list.sort(key=lambda p: p.hardworking, reverse=True)
+    fields.append([p for p in persons_list])
+    persons_list.sort(key=lambda p: p.resposibility, reverse=True)
+    fields.append([p for p in persons_list])
+    persons_list.sort(key=lambda p: p.teamworking, reverse=True)
+    fields.append([p for p in persons_list])
+    persons_list.sort(key=lambda p: p.product_concern, reverse=True)
+    fields.append([p for p in persons_list])
+    persons_list.sort(key=lambda p: p.other, reverse=True)
+    fields.append([p for p in persons_list])
 
-    return persons
+    return fields
 
 
 def get_person_name_from_user_id(user_id):
@@ -128,3 +131,23 @@ def check_register_validation(user_id):
         if p.user_id == user_id:
             return False
     return True
+
+
+def reset_date():
+    session = session_factory()
+    persons = session.query(Person).all()
+    for p in persons:
+        p.product_concern = 0
+        p.teamworking = 0
+        p.resposibility = 0
+        p.hardworking = 0
+        p.learning = 0
+        p.other = 0
+        p.total_pins = 0
+        p.pins = 5
+        session.commit()
+    for r in session.query(Reason).all():
+        session.delete(r)
+        session.commit()
+
+    session.close()

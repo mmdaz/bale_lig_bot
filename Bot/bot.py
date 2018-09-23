@@ -7,9 +7,13 @@ from balebot.handlers import MessageHandler
 from balebot.filters import TemplateResponseFilter, TextFilter
 from Database.operations import *
 from Bot.models import Person, Reason
+import jdatetime
 
-updater = Updater(token="4da1a22c3bd8f29afcc59fdcc82721c901134f1a", loop=asyncio.get_event_loop())
+
+loop = asyncio.get_event_loop()
+updater = Updater(token="4da1a22c3bd8f29afcc59fdcc82721c901134f1a", loop=loop)
 dispatcher = updater.dispatcher
+
 
 
 def success(result):
@@ -98,7 +102,6 @@ def get_person_number(bot, update):
     user_peer = update.get_effective_user()
     input = update.get_effective_message().text
     if input.isnumeric():
-        # print("slaammmmmmmmmmmmmmmmmmmmmmmmmmmm")
         person_number = update.get_effective_message().text
     else:
         bot.send_message(Message.WRONG_ANSWER, user_peer, success_callback=success, failure_callback=failure)
@@ -233,20 +236,92 @@ def get_last_name(bot, update):
 
 
 @dispatcher.command_handler("/report_winner")
-def send_winner_report(bot, update):
-    user_peer = update.get_effective_user()
+def send_winner_report(bot):
     winners = sort_by_all_elements()
-    message = ""
+    message = "رتبه بندی کلی لیگ برتر دمت گرم ..." + "\n\n\n*****************************\n\n"
     for p, i in zip(winners, range(1, len(winners) + 2)):
         print(p)
-        message += "{})  {} {}  **********  ".format(i, p.first_name, p.last_name) + "تعداد پین : {}".format(p.total_pins) + "\n"
+        message += "{})  {} {}  **********   ".format(i, p.first_name, p.last_name) + "تعداد پین : {}".format(
+            p.total_pins) + "\n"
 
     g_peer = Peer(peer_type="Group", peer_id="568560388", access_hash="-993816927678809060")
     bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
 
 
+def send_each_field_winners():
+    bot = dispatcher.bot
+    g_peer = Peer(peer_type="Group", peer_id="568560388", access_hash="-993816927678809060")
+    current_time = jdatetime.datetime.now()
+    field = sort_by_special_field()
+    # for f in field:
+    #     print(f)
+    if current_time.day == 2:
+        send_winner_report(bot)
+        winners = sort_by_special_field()[0]
+        message = Message.LEARNING + "\n\n\n"
+        for p, i in zip(winners[:5], range(1, 6)):
+            message += "{}) {}   {}   **********   ".format(i, p.first_name,
+                                                            p.last_name) + "تعداد پین در این قسمت : {}".format(
+                p.learning) + "\n"
+
+        bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
+
+        winners = sort_by_special_field()[1]
+        message = Message.HARDWORKING + "\n\n\n"
+        for p, i in zip(winners[:5], range(1, 6)):
+            message += "{}) {}   {}   **********   ".format(i, p.first_name,
+                                                            p.last_name) + "تعداد پین در این قسمت : {}".format(
+                p.hardworking) + "\n"
+
+        bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
+
+        winners = sort_by_special_field()[2]
+        message = Message.RESPONSIBILITI + "\n\n\n"
+        for p, i in zip(winners[:5], range(1, 6)):
+            message += "{}) {}   {}   **********   ".format(i, p.first_name,
+                                                            p.last_name) + "تعداد پین در این قسمت : {}".format(
+                p.resposibility) + "\n"
+
+        bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
+
+        winners = sort_by_special_field()[3]
+        message = Message.TEAMWORKING + "\n\n\n"
+        for p, i in zip(winners, range(1, 6)):
+            print(p)
+            message += "{}) {}   {}   **********   ".format(i, p.first_name,
+                                                            p.last_name) + "تعداد پین در این قسمت : {}".format(
+                p.teamworking) + "\n"
+
+        bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
+
+        winners = sort_by_special_field()[4]
+        message = Message.PRODUCT_CONCERN + "\n\n\n"
+        for p, i in zip(winners[:5], range(1, 6)):
+            message += "{}) {}   {}   **********   ".format(i, p.first_name,
+                                                            p.last_name) + "تعداد پین در این قسمت : {}".format(
+                p.product_concern) + "\n"
+
+        bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
+
+        winners = sort_by_special_field()[5]
+        message = Message.OTHER + "\n\n\n"
+        for p, i in zip(winners[:5], range(1, 6)):
+            message += "{}) {}   {}   **********   ".format(i, p.first_name,
+                                                            p.last_name) + "تعداد پین در این قسمت : {}".format(
+                p.other) + "\n"
+
+        bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
+        reset_date()
+        loop.call_later(86300, send_each_field_winners)
+    elif current_time.minute != 16:
+        loop.call_later(86300, send_each_field_winners)
+
+
 def delete_person(bot, update):
-    pass
+    user_peer = update.get_effective_user()
+    bot.send_message(TextMessage("این قسمت در ورژن بعدی اضافه خواهد شد ... :)"), user_peer , success_callback=success,
+                     failure_callback=failure)
+    start_bot(bot, update)
 
-
+loop.call_soon(send_each_field_winners)
 updater.run()

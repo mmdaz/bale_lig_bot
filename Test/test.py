@@ -1,7 +1,4 @@
-from Database.operations import sort_by_all_elements, sort_by_special_field
+from Database.operations import sort_by_all_elements, sort_by_special_field, reset_date
 
 # sort_by_special_field()
-
-message = "پین دهنده :{}".format(2) + "\nvsd"
-
-print(message)
+reset_date()
