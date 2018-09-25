@@ -7,7 +7,7 @@ class Message:
     GET_LAST_NAME = TextMessage("نام خانوادگی خود را وارد کنید : ")
     PERSON_ADDED = TextMessage("شخص مورد نظر اضافه شد . ")
     BACK_TO_MAIN_MENU = TextMessage("بازگشت به منوی اصلی")
-    GIVE_PIN_REQ = TextMessage("لطفا شماره فرد مورد نظر را از لیست  انتخاب و ارسال نمایید :) ")
+    GIVE_PIN_REQ = TextMessage("لطفا شماره فرد مورد نظر (انگلیسی ) را از لیست  انتخاب و ارسال نمایید :) ")
     WHAT_PIN = TextMessage("چه پینی میخوای بهش بدی ؟؟؟")
     LEARNING = "یادگیرندگی و یاد دهندگی"
     HARDWORKING = "روحیه جهادی"

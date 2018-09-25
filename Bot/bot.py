@@ -2,25 +2,33 @@ from balebot.models.base_models import Peer
 from balebot.updater import Updater
 from balebot.models.messages import TemplateMessage, TemplateMessageButton, TextMessage
 import asyncio
+
+from balebot.utils.logger import Logger
+
 from Bot.template_messages import Message
 from balebot.handlers import MessageHandler
 from balebot.filters import TemplateResponseFilter, TextFilter
 from Database.operations import *
 from Bot.models import Person, Reason
+from balebot.config import Config
 import jdatetime
 
+Config.use_graylog = "2"
 
 loop = asyncio.get_event_loop()
 updater = Updater(token="4da1a22c3bd8f29afcc59fdcc82721c901134f1a", loop=loop)
 dispatcher = updater.dispatcher
 
+logger = Logger()
+logger = logger.get_logger()
 
 
-def success(result):
+def success(bot, result):
     print("success : ", result)
 
 
-def failure(result):
+
+def failure(bot, result):
     print("failure : ", result)
 
 
@@ -37,7 +45,10 @@ def get_pin_type_from_number(pin_number):
 
 @dispatcher.command_handler(["/start"])
 def start_bot(bot, update):
+    logger.info("receiving :  " + TextMessage("/start").get_json_str())
+    logger.info("Bot started")
     user_peer = update.get_effective_user()
+    logger.info("user :   " + user_peer.get_json_str())
     button_list = [
         TemplateMessageButton("چن تا پین دارم الان ؟؟؟", "/pin_number", 0),
         TemplateMessageButton("میخوام پین بدم به یکی :)", "/give_pin", 0),
@@ -79,6 +90,7 @@ def send_pin_number(bot, update):
         target_person.product_concern) + "\n" + Message.OTHER + " :  {}".format(target_person.other)
     bot.send_message(TextMessage(pin_detail_message), user_peer, success_callback=success,
                      failure_callback=failure)
+    logger.info("Pins report sent." + user_peer.get_json_str())
     start_bot(bot, update)
     dispatcher.finish_conversation(update)
 
@@ -129,6 +141,7 @@ def get_person_number(bot, update):
                                                            )
     else:
         bot.send_message(Message.WRONG_ANSWER, user_peer, success_callback=success, failure_callback=failure)
+        logger.info("")
         dispatcher.register_conversation_next_step_handler(update, MessageHandler(TextFilter(), get_person_number))
 
 
@@ -189,6 +202,7 @@ def send_report(bot, update):
         dispatcher.get_conversation_data(update, "numbers")) + "\n" + "دلیل و توضیحات : {}".format(
         dispatcher.get_conversation_data(update, "reason"))
     bot.send_message(TextMessage(message), user_peer, success_callback=success, failure_callback=failure)
+    logger.info("Every thing completed successfully ")
 
 
 @dispatcher.command_handler("/add_person")
@@ -214,6 +228,7 @@ def start_register_conversation(bot, update):
 def get_first_name(bot, update):
     user_peer = update.get_effective_user()
     first_name = update.get_effective_message().text
+    logger.info("First name of user received. ")
     dispatcher.set_conversation_data(update, "first_name", first_name)
     bot.send_message(Message.GET_LAST_NAME, user_peer, success_callback=success, failure_callback=failure)
     bot.send_message(TemplateMessage(Message.BACK_TO_MAIN_MENU, main_menu_button), user_peer, success_callback=success,
@@ -227,10 +242,12 @@ def get_first_name(bot, update):
 def get_last_name(bot, update):
     user_peer = update.get_effective_user()
     last_name = update.get_effective_message().text
+    logger.info("Last name of user received. ")
     save_person(
         Person(dispatcher.get_conversation_data(update, "first_name"), last_name, user_peer.get_json_object()["id"],
                user_peer.get_json_object()["accessHash"]))
     bot.send_message(Message.PERSON_ADDED, user_peer, success_callback=success, failure_callback=failure)
+    logger.info("Person registered successfully .")
     start_bot(bot, update)
     dispatcher.finish_conversation(update)
 
@@ -246,6 +263,7 @@ def send_winner_report(bot):
 
     g_peer = Peer(peer_type="Group", peer_id="568560388", access_hash="-993816927678809060")
     bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
+    logger.info("Report of winners ranking sent ")
 
 
 def send_each_field_winners():
@@ -311,17 +329,20 @@ def send_each_field_winners():
                 p.other) + "\n"
 
         bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
+
         reset_date()
+        logger.info("Ranking of each field sent. ")
         loop.call_later(86300, send_each_field_winners)
-    elif current_time.minute != 16:
+    elif current_time.day != 2:
         loop.call_later(86300, send_each_field_winners)
 
 
 def delete_person(bot, update):
     user_peer = update.get_effective_user()
-    bot.send_message(TextMessage("این قسمت در ورژن بعدی اضافه خواهد شد ... :)"), user_peer , success_callback=success,
+    bot.send_message(TextMessage("این قسمت در ورژن بعدی اضافه خواهد شد ... :)"), user_peer, success_callback=success,
                      failure_callback=failure)
     start_bot(bot, update)
+
 
 loop.call_soon(send_each_field_winners)
 updater.run()

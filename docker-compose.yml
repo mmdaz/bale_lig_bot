@@ -1,0 +1,9 @@
+version: '3'
+services:
+  postgres:
+    image: registry.bale.ai:2443/balepostgres:1.6.0
+    ports:
+      - "5431:5431"
+    environment:
+      POSTGRES_DBNAME: ligbot
+      POSTGRES_DBPASS: 1540487768
