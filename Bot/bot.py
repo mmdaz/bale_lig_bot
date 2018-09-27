@@ -28,11 +28,11 @@ logger = logger.get_logger()
 
 
 def success(bot, result):
-    print("success : ", result)
+    print("success send message : ", result)
 
 
 def failure(bot, result):
-    print("failure : ", result)
+    print("failure sent message : ", result)
 
 
 def arabic_to_eng_number(number):
