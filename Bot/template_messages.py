@@ -21,5 +21,6 @@ class Message:
     END_PINS = TextMessage("پین های شما به اتمام رسیده است ...")
     WRONG_ANSWER = TextMessage("ورودی اشتباه است لطفا دوباره وارد نمایید ...")
     WRONG_ANSWER_FOR_REGISTER = TextMessage("شما قبلا ثبت نام کرده اید ... ")
+    VERIFICATION = TextMessage("آیا اطمینان دارید ؟؟؟")
 
 

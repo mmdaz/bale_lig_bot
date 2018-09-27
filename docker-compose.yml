@@ -1,9 +1,23 @@
-version: '3'
+version: '3.4'
 services:
-  postgres:
+  pg_bot_server:
     image: registry.bale.ai:2443/balepostgres:1.6.0
-    ports:
-      - "5431:5431"
+    container_name: "postgresql"
+    restart: always
     environment:
-      POSTGRES_DBNAME: ligbot
-      POSTGRES_DBPASS: 1540487768
+      - POSTGRES_DB=DametGarmLig
+      - POSTGRES_PASSWORD=1540487768
+      - POSTGRES_USER=muhammad
+      - TZ=Asia/Tehran
+
+
+  app:
+    build: .
+    hostname: ligbot
+    container_name: ligbot
+    command: sleep 1h
+    volumes:
+      - .:/ligbot
+    depends_on:
+      - pg_bot_server
+
