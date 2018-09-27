@@ -15,9 +15,10 @@ services:
     build: .
     hostname: ligbot
     container_name: ligbot
-    command: sleep 1h
+    command: python -m Bot.bot
     volumes:
       - .:/ligbot
     depends_on:
       - pg_bot_server
+
 

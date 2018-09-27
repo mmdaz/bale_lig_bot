@@ -15,6 +15,13 @@ def save_person(person_from_bot):
     session.commit()
     session.close()
 
+def is_registered(user_id):
+    persons = get_all_persons()
+    for person in persons:
+        if person.user_id == user_id:
+            return True
+
+    return False
 
 def get_all_persons():
     session = session_factory()

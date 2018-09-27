@@ -58,30 +58,31 @@ def get_pin_type_from_number(pin_number):
 
 @dispatcher.command_handler(["/start"])
 def start_bot(bot, update):
+    user_peer = update.get_effective_user()
     logger.info("receiving :  " + TextMessage("/start").get_json_str())
     logger.info("Bot started")
-    user_peer = update.get_effective_user()
     logger.info("user :   " + user_peer.get_json_str())
-    button_list = [
+    button_list = (user_peer.get_json_object()["id"] != "1314892980" and [
         TemplateMessageButton("چن تا پین دارم الان ؟؟؟", "/pin_number", 0),
         TemplateMessageButton("میخوام پین بدم به یکی :)", "/give_pin", 0),
         TemplateMessageButton("ثبت نام ", "/add_person", 0)
-    ] if user_peer.get_json_object()["id"] != "1314892980" else [
+    ]) or (user_peer.get_json_object()["id"] == "131489298" and [
         TemplateMessageButton("چن تا پین دارم الان ؟؟؟", "/pin_number", 0),
         TemplateMessageButton("میخوام پین بدم به یکی :)", "/give_pin", 0),
         TemplateMessageButton("حذف از لیگ ", "/delete_person", 0),
         TemplateMessageButton("ثبت نام ", "/add_person", 0)
-    ]
+    ]) or (not is_registered(user_peer.get_json_object()["id"]) and [TemplateMessageButton("ثبت نام ", "/add_person", 0)]) or (is_registered(user_peer.get_json_object()["id"]) and [ TemplateMessageButton("چن تا پین دارم الان ؟؟؟", "/pin_number", 0),
+        TemplateMessageButton("میخوام پین بدم به یکی :)", "/give_pin", 0)])
 
     bot.send_message(TemplateMessage(Message.START_MESSAGE, btn_list=button_list), user_peer, success_callback=success,
-                     failure_callback=failure)
+                    failure_callback=failure)
 
     dispatcher.register_conversation_next_step_handler(update, [
-        MessageHandler(TemplateResponseFilter(keywords=["/pin_number"]), send_pin_number),
-        MessageHandler(TemplateResponseFilter(keywords=["/give_pin"]), give_pin),
-        MessageHandler(TemplateResponseFilter(keywords=["/add_person"]), start_register_conversation),
-        MessageHandler(TemplateResponseFilter(keywords=["/delete_person"]), delete_person)
-    ])
+            MessageHandler(TemplateResponseFilter(keywords=["/pin_number"]), send_pin_number),
+            MessageHandler(TemplateResponseFilter(keywords=["/give_pin"]), give_pin),
+            MessageHandler(TemplateResponseFilter(keywords=["/add_person"]), start_register_conversation),
+            MessageHandler(TemplateResponseFilter(keywords=["/delete_person"]), delete_person)
+        ])
 
 
 @dispatcher.command_handler("/pin_number")
