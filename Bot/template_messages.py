@@ -1,7 +1,7 @@
 from balebot.models.messages import TextMessage
 
-class Message:
 
+class Message:
     START_MESSAGE = TextMessage("سلام من بازوی لیگ برتر دمت گرمم :) حالا بگو میخوای چیکار کنی ؟؟")
     GET_FIRST_NAME = TextMessage("لطفا نام خود را وارد نمایید :")
     GET_LAST_NAME = TextMessage("نام خانوادگی خود را وارد کنید : ")
@@ -22,5 +22,3 @@ class Message:
     WRONG_ANSWER = TextMessage("ورودی اشتباه است لطفا دوباره وارد نمایید ...")
     WRONG_ANSWER_FOR_REGISTER = TextMessage("شما قبلا ثبت نام کرده اید ... ")
     VERIFICATION = TextMessage("آیا اطمینان دارید ؟؟؟")
-
-
