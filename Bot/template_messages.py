@@ -3,8 +3,8 @@ from balebot.models.messages import TextMessage
 
 class Message:
     START_MESSAGE = TextMessage("سلام من بازوی لیگ برتر دمت گرمم :) حالا بگو میخوای چیکار کنی ؟؟")
-    GET_FIRST_NAME = TextMessage("لطفا نام خود را وارد نمایید :")
-    GET_LAST_NAME = TextMessage("نام خانوادگی خود را وارد کنید : ")
+    GET_FIRST_NAME = TextMessage("لطفا *نام* خود را وارد نمایید :")
+    GET_LAST_NAME = TextMessage("*نام خانوادگی* خود را وارد کنید : ")
     PERSON_ADDED = TextMessage("ثبت نام با موفقیت انجام شد :) ")
     BACK_TO_MAIN_MENU = TextMessage("بازگشت به منوی اصلی")
     GIVE_PIN_REQ = TextMessage("لطفا شماره فرد مورد نظر (انگلیسی ) را از لیست  انتخاب و ارسال نمایید :) ")

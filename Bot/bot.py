@@ -60,7 +60,7 @@ def start_bot(bot, update):
     logger.info("receiving :  " + TextMessage("/start").get_json_str())
     logger.info("Bot started")
     logger.info("user :   " + user_peer.get_json_str())
-    button_list = (user_peer.get_json_object()["id"] != LigBotConfig.admin_user_id and [
+    button_list = ((user_peer.get_json_object()["id"] != LigBotConfig.admin_user_id and is_registered(user_peer.get_json_object()["id"])) and [
         TemplateMessageButton(Message.HOW_MANY_PINS_I_HAVE, "/pin_number", 0),
         TemplateMessageButton(Message.I_WANT_TO_GIVE_PIN, "/give_pin", 0),
         TemplateMessageButton(Message.REGISTER, "/add_person", 0)
@@ -114,7 +114,7 @@ def give_pin(bot, update):
     dispatcher.set_conversation_data(update, "persons_list", persons_list)
     message_text = ""
     for person in persons_list:
-        message_text += "{} - {}   {}\n".format(person.id, person.first_name, person.last_name)
+        message_text += "{} - {}   {}\n".format(persons_list.index(person) + 1, person.first_name, person.last_name)
 
     bot.send_message(TemplateMessage(Message.GIVE_PIN_REQ, start_menu_button), user_peer, success_callback=success,
                      failure_callback=failure)
@@ -129,6 +129,7 @@ def get_person_number(bot, update):
     person_number = 0
     user_peer = update.get_effective_user()
     input = update.get_effective_message().text
+    persons_list = dispatcher.get_conversation_data(update, "persons_list")
     if input.isnumeric():
         person_number = arabic_to_eng_number(input)
     else:
@@ -138,8 +139,8 @@ def get_person_number(bot, update):
                                                                     MessageHandler(
                                                                         TemplateResponseFilter(keywords=["/start"]),
                                                                         start_bot)])
-    if check_person_validation(user_peer.get_json_object()["id"], person_number):
-        dispatcher.set_conversation_data(update, "person_number", person_number)
+    if check_person_validation(user_peer.get_json_object()["id"], persons_list[int(person_number) - 1].id):
+        dispatcher.set_conversation_data(update, "person_number", int(person_number) - 1)
         pin_buttons_list = [
             TemplateMessageButton(Message.LEARNING, "/1", 0),
             TemplateMessageButton(Message.HARDWORKING, "/2", 0),
@@ -162,9 +163,10 @@ def get_person_number(bot, update):
         ]
                                                            )
     else:
-        bot.send_message(Message.WRONG_ANSWER, user_peer, success_callback=success, failure_callback=failure)
+        bot.send_message(TemplateMessage(Message.WRONG_ANSWER, start_menu_button), user_peer, success_callback=success, failure_callback=failure)
         logger.info("")
-        dispatcher.register_conversation_next_step_handler(update, MessageHandler(TextFilter(), get_person_number))
+        dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_person_number),
+                                                                    MessageHandler(TemplateResponseFilter(keywords="/start"), start_bot)])
 
 
 def get_pin_type(bot, update):
@@ -218,9 +220,10 @@ def verification(bot, update):
     person = get_person_name_from_user_id(user_peer.get_json_object()["id"])
     persons_list = dispatcher.get_conversation_data(update, "persons_list")
     receiver_id = dispatcher.get_conversation_data(update, "person_number")
-
+    print(persons_list)
+    print(receiver_id)
     for p in persons_list:
-        if p.id == int(receiver_id):
+        if persons_list.index(p) == int(receiver_id):
             receiver_person = p
     message = Message.PIN_GIVER.format(person.first_name, person.last_name) + "\n" + Message.Receiver.format(
         receiver_person.first_name, receiver_person.last_name) + "\n" + \
@@ -243,17 +246,21 @@ def verification(bot, update):
 
 def save_pin(bot, update):
     user_peer = update.get_effective_user()
-    reason = dispatcher.get_conversation_data(update, "reason")
     id = dispatcher.get_conversation_data(update, "person_number")
+    persons_list = dispatcher.get_conversation_data(update, "persons_list")
+    for p in persons_list:
+        if persons_list.index(p) == int(id):
+            receiver_person = p
+    reason = dispatcher.get_conversation_data(update, "reason")
     pin_type = dispatcher.get_conversation_data(update, "pin_type_number")
     pin_numbers = dispatcher.get_conversation_data(update, "numbers")
-    update_pins(id, pin_type, pin_numbers)
+    update_pins(receiver_person.id, pin_type, pin_numbers)
     update_pin_numbers(user_peer.get_json_object()["id"], pin_numbers)
-    save_reason(Reason(reason, pin_type, id))
+    save_reason(Reason(reason, pin_type, receiver_person.id))
     send_report(bot, update)
     logger.info("every thing saved successfully .")
     bot.send_message(Message.GIVE_PIN_SUCCESS, user_peer, success_callback=success, failure_callback=failure)
-    dispatcher.finish_conversation()
+    dispatcher.finish_conversation(update)
     start_bot(bot, update)
 
 
@@ -262,9 +269,10 @@ def send_report(bot, update):
     person = get_person_name_from_user_id(user_peer.get_json_object()["id"])
     persons_list = dispatcher.get_conversation_data(update, "persons_list")
     receiver_id = dispatcher.get_conversation_data(update, "person_number")
-
+    print(persons_list)
+    print(receiver_id)
     for p in persons_list:
-        if p.id == int(receiver_id):
+        if persons_list.index(p)  == int(receiver_id):
             receiver_person = p
     message = Message.PIN_GIVER.format(person.first_name, person.last_name) + "\n" + Message.Receiver.format(
         receiver_person.first_name, receiver_person.last_name) + "\n" + \
@@ -280,8 +288,7 @@ def send_report(bot, update):
 def start_register_conversation(bot, update):
     user_peer = update.get_effective_user()
     if check_register_validation(user_peer.get_json_object()["id"]):
-        bot.send_message(Message.GET_FIRST_NAME, user_peer, success_callback=success, failure_callback=failure)
-        bot.send_message(TemplateMessage(Message.BACK_TO_MAIN_MENU, main_menu_button), user_peer,
+        bot.send_message(TemplateMessage(Message.GET_FIRST_NAME, main_menu_button), user_peer,
                          success_callback=success,
                          failure_callback=failure)
         dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_first_name),
@@ -300,8 +307,7 @@ def get_first_name(bot, update):
     first_name = update.get_effective_message().text
     logger.info("First name of user received. ")
     dispatcher.set_conversation_data(update, "first_name", first_name)
-    bot.send_message(Message.GET_LAST_NAME, user_peer, success_callback=success, failure_callback=failure)
-    bot.send_message(TemplateMessage(Message.BACK_TO_MAIN_MENU, main_menu_button), user_peer, success_callback=success,
+    bot.send_message(TemplateMessage(Message.GET_LAST_NAME, main_menu_button), user_peer, success_callback=success,
                      failure_callback=failure)
     dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_last_name),
                                                                 MessageHandler(
@@ -331,7 +337,6 @@ def send_winner_report(bot):
         message += "{})  {} {}  **********   ".format(i, p.first_name, p.last_name) + Message.PIN_NUMBER.format(
             p.total_pins) + "\n"
 
-    g_peer = Peer(peer_type="Group", peer_id="568560388", access_hash="-993816927678809060")
     bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
     logger.info("Report of winners ranking sent ")
 

@@ -12,3 +12,7 @@ def eng_to_arabic_number(number):
     return number.translate(str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹'))
 
 print(arabic_to_eng_number("65315"))
+
+
+li = ["vdf", "dsv"]
+print(li.index())
