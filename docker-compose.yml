@@ -24,6 +24,7 @@ services:
       - GROUP_ID=
       - GROUP_ACCESS_HASH=
       - ADMIN_USER_ID=
+      - DB_HOST=
     command: python -m Bot.bot
     volumes:
       - .:/ligbot

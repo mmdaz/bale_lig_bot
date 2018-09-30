@@ -1,5 +1,6 @@
 import os
 
+
 class LigBotConfig:
     group_id = int(os.environ.get('GROUP_ID', None) or 568560388)
     group_access_hash = os.environ.get('GROUP_ACCESS_HASH', None) or "-993816927678809060"
@@ -9,4 +10,4 @@ class LigBotConfig:
     db_password = os.environ.get('POSTGRES_PASSWORD', None) or "1540487768"
     report_delay = int(os.environ.get('REPORT_DELAY', None) or 15)
     bot_token = os.environ.get('BOT_TOKEN', None) or "4da1a22c3bd8f29afcc59fdcc82721c901134f1a"
-
+    db_host = os.environ.get('DB_HOST', None) or "postgres"
