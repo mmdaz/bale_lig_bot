@@ -1,8 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from Bot.lig_bot_config import LigBotConfig
 
-engine = create_engine('postgresql://muhammad:1540487768@postgresql/DametGarmLig', echo=True)
+engine = create_engine('postgresql://{}:{}@postgresql/{}'.format(LigBotConfig.db_user, LigBotConfig.db_password, LigBotConfig.db_name), echo=True)
 
 _SessionFactory = sessionmaker(bind=engine)
 

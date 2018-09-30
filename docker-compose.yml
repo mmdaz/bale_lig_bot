@@ -15,6 +15,15 @@ services:
     build: .
     hostname: ligbot
     container_name: ligbot
+    environment:
+      - POSTGRES_DB=
+      - POSTGRES_PASSWORD=
+      - POSTGRES_USER=
+      - BOT_TOKEN=
+      - REPORT_DELAY=
+      - GROUP_ID=
+      - GROUP_ACCESS_HASH=
+      - ADMIN_USER_ID=
     command: python -m Bot.bot
     volumes:
       - .:/ligbot

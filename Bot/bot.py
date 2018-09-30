@@ -2,9 +2,7 @@ from balebot.models.base_models import Peer
 from balebot.updater import Updater
 from balebot.models.messages import TemplateMessage, TemplateMessageButton, TextMessage
 import asyncio
-
 from balebot.utils.logger import Logger
-
 from Bot.template_messages import Message
 from balebot.handlers import MessageHandler
 from balebot.filters import TemplateResponseFilter, TextFilter
@@ -16,12 +14,12 @@ import jdatetime
 Config.use_graylog = "2"
 
 loop = asyncio.get_event_loop()
-updater = Updater(token="4da1a22c3bd8f29afcc59fdcc82721c901134f1a", loop=loop)
+updater = Updater(token=LigBotConfig.bot_token, loop=loop)
 dispatcher = updater.dispatcher
-g_peer = Peer(peer_type="Group", peer_id="568560388", access_hash="-993816927678809060")
+g_peer = Peer(peer_type="Group", peer_id=LigBotConfig.group_id, access_hash=LigBotConfig.group_access_hash)
 start_menu_template_message = TemplateMessage(Message.BACK_TO_MAIN_MENU,
-                                              [TemplateMessageButton("بازگشت به منوی اصلی", "/start", 0)])
-start_menu_button = [TemplateMessageButton("بازگشت به منوی اصلی", "/start", 0)]
+                                              [TemplateMessageButton(Message.BACK_TO_MAIN_MENU.text, "/start", 0)])
+start_menu_button = [TemplateMessageButton(Message.BACK_TO_MAIN_MENU.text, "/start", 0)]
 
 logger = Logger()
 logger = logger.get_logger()
@@ -46,7 +44,7 @@ def eng_to_arabic_number(number):
 
 
 main_menu_button = [
-    TemplateMessageButton("بازگشت به منوی اصلی", "/start", 0)
+    TemplateMessageButton(Message.BACK_TO_MAIN_MENU.text, "/start", 0)
 ]
 
 
@@ -62,17 +60,17 @@ def start_bot(bot, update):
     logger.info("receiving :  " + TextMessage("/start").get_json_str())
     logger.info("Bot started")
     logger.info("user :   " + user_peer.get_json_str())
-    button_list = (user_peer.get_json_object()["id"] != "1314892980" and [
-        TemplateMessageButton("چن تا پین دارم الان ؟؟؟", "/pin_number", 0),
-        TemplateMessageButton("میخوام پین بدم به یکی :)", "/give_pin", 0),
-        TemplateMessageButton("ثبت نام ", "/add_person", 0)
-    ]) or (user_peer.get_json_object()["id"] == "131489298" and [
-        TemplateMessageButton("چن تا پین دارم الان ؟؟؟", "/pin_number", 0),
-        TemplateMessageButton("میخوام پین بدم به یکی :)", "/give_pin", 0),
-        TemplateMessageButton("حذف از لیگ ", "/delete_person", 0),
-        TemplateMessageButton("ثبت نام ", "/add_person", 0)
-    ]) or (not is_registered(user_peer.get_json_object()["id"]) and [TemplateMessageButton("ثبت نام ", "/add_person", 0)]) or (is_registered(user_peer.get_json_object()["id"]) and [ TemplateMessageButton("چن تا پین دارم الان ؟؟؟", "/pin_number", 0),
-        TemplateMessageButton("میخوام پین بدم به یکی :)", "/give_pin", 0)])
+    button_list = (user_peer.get_json_object()["id"] != LigBotConfig.admin_user_id and [
+        TemplateMessageButton(Message.HOW_MANY_PINS_I_HAVE, "/pin_number", 0),
+        TemplateMessageButton(Message.I_WANT_TO_GIVE_PIN, "/give_pin", 0),
+        TemplateMessageButton(Message.REGISTER, "/add_person", 0)
+    ]) or ((user_peer.get_json_object()["id"] == LigBotConfig.admin_user_id and is_registered(user_peer.get_json_object()["id"])) and [
+        TemplateMessageButton(Message.HOW_MANY_PINS_I_HAVE, "/pin_number", 0),
+        TemplateMessageButton(Message.I_WANT_TO_GIVE_PIN, "/give_pin", 0),
+        TemplateMessageButton(Message.DELETE_FROM_LIG, "/delete_person", 0),
+        TemplateMessageButton(Message.REGISTER, "/add_person", 0)
+    ]) or (not is_registered(user_peer.get_json_object()["id"]) and [TemplateMessageButton(Message.REGISTER, "/add_person", 0)]) or (is_registered(user_peer.get_json_object()["id"]) and [ TemplateMessageButton(Message.HOW_MANY_PINS_I_HAVE, "/pin_number", 0),
+        TemplateMessageButton(Message.I_WANT_TO_GIVE_PIN, "/give_pin", 0)])
 
     bot.send_message(TemplateMessage(Message.START_MESSAGE, btn_list=button_list), user_peer, success_callback=success,
                     failure_callback=failure)
@@ -91,11 +89,11 @@ def send_pin_number(bot, update):
     user_peer = update.get_effective_user()
     target_person = get_pin_numbers(user_peer.get_json_object()["id"])
     pin_number = target_person.pins
-    bot.send_message(TextMessage("شما {} تا پین دارید که میتوانید به دیگران بدهید  ... ".format(pin_number)), user_peer,
+    bot.send_message(TextMessage(Message.YOU_ARE_N_PINS.format(pin_number)), user_peer,
                      success_callback=success,
                      failure_callback=failure)
 
-    pin_detail_message = "تعداد پین های شما در هر قسمت که دریافت کردید :‌" + "\n" + Message.LEARNING + " : {}".format(
+    pin_detail_message = Message.NUMBER_OF_YOUR_PINS + "\n" + Message.LEARNING + " : {}".format(
         target_person.learning) + "\n" + Message.HARDWORKING + " :  {}".format(
         target_person.hardworking) + "\n" + Message.RESPONSIBILITI + " :  {}".format(
         target_person.resposibility) + "\n" + \
@@ -224,16 +222,16 @@ def verification(bot, update):
     for p in persons_list:
         if p.id == int(receiver_id):
             receiver_person = p
-    message = "پین دهنده :{} {}".format(person.first_name, person.last_name) + "\n" + "گیرنده :‌ {}  {}".format(
+    message = Message.PIN_GIVER.format(person.first_name, person.last_name) + "\n" + Message.Receiver.format(
         receiver_person.first_name, receiver_person.last_name) + "\n" + \
-              "نوع پین :‌{}".format(get_pin_type_from_number(
-                  dispatcher.get_conversation_data(update, "pin_type_number"))) + "\n" + "تعداد پین :{}".format(
-        dispatcher.get_conversation_data(update, "numbers")) + "\n" + "دلیل و توضیحات : {}".format(
+              Message.PIN_KIND.format(get_pin_type_from_number(
+                  dispatcher.get_conversation_data(update, "pin_type_number"))) + "\n" + Message.PIN_NUMBER.format(
+        dispatcher.get_conversation_data(update, "numbers")) + "\n" + Message.REASON.format(
         dispatcher.get_conversation_data(update, "reason"))
     bot.send_message(TextMessage(message), user_peer, success_callback=success, failure_callback=failure)
     verification_btn_list = [
-        TemplateMessageButton("آرههههه :)", "yes", 0),
-        TemplateMessageButton("نه نه اشتباه شد برگرد عقب برگرد عقب :)))", "no", 0)
+        TemplateMessageButton(Message.YES, "yes", 0),
+        TemplateMessageButton(Message.NO, "no", 0)
     ]
     bot.send_message(TemplateMessage(Message.VERIFICATION, verification_btn_list), user_peer, success_callback=success,
                      failure_callback=failure)
@@ -268,11 +266,11 @@ def send_report(bot, update):
     for p in persons_list:
         if p.id == int(receiver_id):
             receiver_person = p
-    message = "پین دهنده :{} {}".format(person.first_name, person.last_name) + "\n" + "گیرنده :‌ {}  {}".format(
+    message = Message.PIN_GIVER.format(person.first_name, person.last_name) + "\n" + Message.Receiver.format(
         receiver_person.first_name, receiver_person.last_name) + "\n" + \
-              "نوع پین :‌{}".format(get_pin_type_from_number(
-                  dispatcher.get_conversation_data(update, "pin_type_number"))) + "\n" + "تعداد پین :{}".format(
-        dispatcher.get_conversation_data(update, "numbers")) + "\n" + "دلیل و توضیحات : {}".format(
+              Message.PIN_KIND.format(get_pin_type_from_number(
+                  dispatcher.get_conversation_data(update, "pin_type_number"))) + "\n" + Message.PIN_NUMBER.format(
+        dispatcher.get_conversation_data(update, "numbers")) + "\n" + Message.REASON.format(
         dispatcher.get_conversation_data(update, "reason"))
     bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
 
@@ -327,10 +325,10 @@ def get_last_name(bot, update):
 @dispatcher.command_handler("/report_winner")
 def send_winner_report(bot):
     winners = sort_by_all_elements()
-    message = "رتبه بندی کلی لیگ برتر دمت گرم ..." + "\n\n\n*****************************\n\n"
+    message = Message.TOTAL_RANCKING + "\n\n\n*****************************\n\n"
     for p, i in zip(winners, range(1, len(winners) + 2)):
         print(p)
-        message += "{})  {} {}  **********   ".format(i, p.first_name, p.last_name) + "تعداد پین : {}".format(
+        message += "{})  {} {}  **********   ".format(i, p.first_name, p.last_name) + Message.PIN_NUMBER.format(
             p.total_pins) + "\n"
 
     g_peer = Peer(peer_type="Group", peer_id="568560388", access_hash="-993816927678809060")
@@ -344,13 +342,13 @@ def send_each_field_winners():
     field = sort_by_special_field()
     # for f in field:
     #     print(f)
-    if current_time.day == 15:
+    if current_time.day == LigBotConfig.report_delay:
         send_winner_report(bot)
         winners = sort_by_special_field()[0]
         message = Message.LEARNING + "\n\n\n"
         for p, i in zip(winners[:5], range(1, 6)):
             message += "{}) {}   {}   **********   ".format(i, p.first_name,
-                                                            p.last_name) + "تعداد پین در این قسمت : {}".format(
+                                                            p.last_name) + Message.SPECIAL_PIN_NUMBER.format(
                 p.learning) + "\n"
 
         bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
@@ -359,7 +357,7 @@ def send_each_field_winners():
         message = Message.HARDWORKING + "\n\n\n"
         for p, i in zip(winners[:5], range(1, 6)):
             message += "{}) {}   {}   **********   ".format(i, p.first_name,
-                                                            p.last_name) + "تعداد پین در این قسمت : {}".format(
+                                                            p.last_name) + Message.SPECIAL_PIN_NUMBER.format(
                 p.hardworking) + "\n"
 
         bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
@@ -368,7 +366,7 @@ def send_each_field_winners():
         message = Message.RESPONSIBILITI + "\n\n\n"
         for p, i in zip(winners[:5], range(1, 6)):
             message += "{}) {}   {}   **********   ".format(i, p.first_name,
-                                                            p.last_name) + "تعداد پین در این قسمت : {}".format(
+                                                            p.last_name) + Message.SPECIAL_PIN_NUMBER.format(
                 p.resposibility) + "\n"
 
         bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
@@ -378,7 +376,7 @@ def send_each_field_winners():
         for p, i in zip(winners, range(1, 6)):
             print(p)
             message += "{}) {}   {}   **********   ".format(i, p.first_name,
-                                                            p.last_name) + "تعداد پین در این قسمت : {}".format(
+                                                            p.last_name) + Message.SPECIAL_PIN_NUMBER.format(
                 p.teamworking) + "\n"
 
         bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
@@ -387,7 +385,7 @@ def send_each_field_winners():
         message = Message.PRODUCT_CONCERN + "\n\n\n"
         for p, i in zip(winners[:5], range(1, 6)):
             message += "{}) {}   {}   **********   ".format(i, p.first_name,
-                                                            p.last_name) + "تعداد پین در این قسمت : {}".format(
+                                                            p.last_name) + Message.SPECIAL_PIN_NUMBER.format(
                 p.product_concern) + "\n"
 
         bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
@@ -396,7 +394,7 @@ def send_each_field_winners():
         message = Message.OTHER + "\n\n\n"
         for p, i in zip(winners[:5], range(1, 6)):
             message += "{}) {}   {}   **********   ".format(i, p.first_name,
-                                                            p.last_name) + "تعداد پین در این قسمت : {}".format(
+                                                            p.last_name) + Message.SPECIAL_PIN_NUMBER.format(
                 p.other) + "\n"
 
         bot.send_message(TextMessage(message), g_peer, success_callback=success, failure_callback=failure)
@@ -404,13 +402,13 @@ def send_each_field_winners():
         reset_date()
         logger.info("Ranking of each field sent. ")
         loop.call_later(86300, send_each_field_winners)
-    elif current_time.day != 15:
+    elif current_time.day != LigBotConfig.report_delay:
         loop.call_later(86300, send_each_field_winners)
 
 
 def delete_person(bot, update):
     user_peer = update.get_effective_user()
-    bot.send_message(TextMessage("این قسمت در ورژن بعدی اضافه خواهد شد ... :)"), user_peer, success_callback=success,
+    bot.send_message(TextMessage(Message.NEXT_VERSION), user_peer, success_callback=success,
                      failure_callback=failure)
     start_bot(bot, update)
 
