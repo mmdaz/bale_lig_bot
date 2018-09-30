@@ -29,9 +29,9 @@ logger = logger.get_logger()
 def success(bot, result):
     print("success sent message : ", result)
 
+
 def failure(bot, result):
     print("failure sent message : ", result)
-
 
 
 main_menu_button = [
@@ -52,27 +52,32 @@ def start_bot(bot, update):
     logger.info("receiving :  " + TextMessage("/start").get_json_str())
     logger.info("Bot started")
     logger.info("user :   " + user_peer.get_json_str())
-    button_list = ((user_peer.get_json_object()["id"] != LigBotConfig.admin_user_id and is_registered(user_peer.get_json_object()["id"])) and [
-        TemplateMessageButton(Message.HOW_MANY_PINS_I_HAVE, "/pin_number", 0),
-        TemplateMessageButton(Message.I_WANT_TO_GIVE_PIN, "/give_pin", 0),
-        TemplateMessageButton(Message.REGISTER, "/add_person", 0)
-    ]) or ((user_peer.get_json_object()["id"] == LigBotConfig.admin_user_id and is_registered(user_peer.get_json_object()["id"])) and [
-        TemplateMessageButton(Message.HOW_MANY_PINS_I_HAVE, "/pin_number", 0),
-        TemplateMessageButton(Message.I_WANT_TO_GIVE_PIN, "/give_pin", 0),
-        TemplateMessageButton(Message.DELETE_FROM_LIG, "/delete_person", 0),
-        TemplateMessageButton(Message.REGISTER, "/add_person", 0)
-    ]) or (not is_registered(user_peer.get_json_object()["id"]) and [TemplateMessageButton(Message.REGISTER, "/add_person", 0)]) or (is_registered(user_peer.get_json_object()["id"]) and [ TemplateMessageButton(Message.HOW_MANY_PINS_I_HAVE, "/pin_number", 0),
-        TemplateMessageButton(Message.I_WANT_TO_GIVE_PIN, "/give_pin", 0)])
+    button_list = ((user_peer.get_json_object()["id"] != LigBotConfig.admin_user_id and is_registered(
+        user_peer.get_json_object()["id"])) and [
+                       TemplateMessageButton(Message.HOW_MANY_PINS_I_HAVE, "/pin_number", 0),
+                       TemplateMessageButton(Message.I_WANT_TO_GIVE_PIN, "/give_pin", 0),
+                       TemplateMessageButton(Message.REGISTER, "/add_person", 0)
+                   ]) or ((user_peer.get_json_object()["id"] == LigBotConfig.admin_user_id and is_registered(
+        user_peer.get_json_object()["id"])) and [
+                              TemplateMessageButton(Message.HOW_MANY_PINS_I_HAVE, "/pin_number", 0),
+                              TemplateMessageButton(Message.I_WANT_TO_GIVE_PIN, "/give_pin", 0),
+                              TemplateMessageButton(Message.DELETE_FROM_LIG, "/delete_person", 0),
+                              TemplateMessageButton(Message.REGISTER, "/add_person", 0)
+                          ]) or (not is_registered(user_peer.get_json_object()["id"]) and [
+        TemplateMessageButton(Message.REGISTER, "/add_person", 0)]) or (
+                          is_registered(user_peer.get_json_object()["id"]) and [
+                      TemplateMessageButton(Message.HOW_MANY_PINS_I_HAVE, "/pin_number", 0),
+                      TemplateMessageButton(Message.I_WANT_TO_GIVE_PIN, "/give_pin", 0)])
 
     bot.send_message(TemplateMessage(Message.START_MESSAGE, btn_list=button_list), user_peer, success_callback=success,
-                    failure_callback=failure)
+                     failure_callback=failure)
 
     dispatcher.register_conversation_next_step_handler(update, [
-            MessageHandler(TemplateResponseFilter(keywords=["/pin_number"]), send_pin_number),
-            MessageHandler(TemplateResponseFilter(keywords=["/give_pin"]), give_pin),
-            MessageHandler(TemplateResponseFilter(keywords=["/add_person"]), start_register_conversation),
-            MessageHandler(TemplateResponseFilter(keywords=["/delete_person"]), delete_person)
-        ])
+        MessageHandler(TemplateResponseFilter(keywords=["/pin_number"]), send_pin_number),
+        MessageHandler(TemplateResponseFilter(keywords=["/give_pin"]), give_pin),
+        MessageHandler(TemplateResponseFilter(keywords=["/add_person"]), start_register_conversation),
+        MessageHandler(TemplateResponseFilter(keywords=["/delete_person"]), delete_person)
+    ])
 
 
 @dispatcher.command_handler("/pin_number")
@@ -104,13 +109,14 @@ def give_pin(bot, update):
     user_peer = update.get_effective_user()
     persons_list = get_all_persons()
     dispatcher.set_conversation_data(update, "persons_list", persons_list)
-    message_text = ""
+    message_text = Message.GIVE_PIN_REQ.text + "\n\n"
     for person in persons_list:
         message_text += "{} - {}   {}\n".format(persons_list.index(person) + 1, person.first_name, person.last_name)
 
-    bot.send_message(TemplateMessage(Message.GIVE_PIN_REQ, start_menu_button), user_peer, success_callback=success,
+
+    bot.send_message(TemplateMessage(TextMessage(message_text), start_menu_button), user_peer, success_callback=success,
                      failure_callback=failure)
-    bot.send_message(TextMessage(message_text), user_peer, success_callback=success, failure_callback=failure)
+    # bot.send_message(TextMessage(message_text), user_peer, success_callback=success, failure_callback=failure)
     dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_person_number),
                                                                 MessageHandler(
                                                                     TemplateResponseFilter(keywords="/start"),
@@ -155,18 +161,21 @@ def get_person_number(bot, update):
         ]
                                                            )
     else:
-        bot.send_message(TemplateMessage(Message.WRONG_ANSWER, start_menu_button), user_peer, success_callback=success, failure_callback=failure)
+        bot.send_message(TemplateMessage(Message.WRONG_ANSWER, start_menu_button), user_peer, success_callback=success,
+                         failure_callback=failure)
         logger.info("")
         dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_person_number),
-                                                                    MessageHandler(TemplateResponseFilter(keywords="/start"), start_bot)])
+                                                                    MessageHandler(
+                                                                        TemplateResponseFilter(keywords="/start"),
+                                                                        start_bot)])
 
 
 def get_pin_type(bot, update):
     user_peer = update.get_effective_user()
     pin_type_number = int(update.get_effective_message().text_message[1])
     dispatcher.set_conversation_data(update, "pin_type_number", pin_type_number)
-    bot.send_message(Message.HOW_MANY_PINS, user_peer, success_callback=success, failure_callback=failure)
-    bot.send_message(start_menu_template_message, user_peer, success_callback=success, failure_callback=failure)
+    bot.send_message(TemplateMessage(Message.HOW_MANY_PINS, start_menu_button), user_peer, success_callback=success, failure_callback=failure)
+    # bot.send_message(start_menu_template_message, user_peer, success_callback=success, failure_callback=failure)
     dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_numbers_of_pins),
                                                                 MessageHandler(
                                                                     TemplateResponseFilter(keywords="/start"),
@@ -264,7 +273,7 @@ def send_report(bot, update):
     print(persons_list)
     print(receiver_id)
     for p in persons_list:
-        if persons_list.index(p)  == int(receiver_id):
+        if persons_list.index(p) == int(receiver_id):
             receiver_person = p
     message = Message.PIN_GIVER.format(person.first_name, person.last_name) + "\n" + Message.Receiver.format(
         receiver_person.first_name, receiver_person.last_name) + "\n" + \
@@ -339,7 +348,7 @@ def send_each_field_winners():
     field = sort_by_special_field()
     # for f in field:
     #     print(f)
-    if current_time.day == LigBotConfig.report_delay1 or current_time.day == LigBotConfig.report_delay2 :
+    if current_time.day == LigBotConfig.report_delay1 or current_time.day == LigBotConfig.report_delay2:
         send_winner_report(bot)
         winners = sort_by_special_field()[0]
         message = Message.LEARNING + "\n\n\n"
