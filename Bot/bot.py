@@ -10,6 +10,7 @@ from Database.operations import *
 from Bot.models import Person, Reason
 from balebot.config import Config
 import jdatetime
+from Bot.utils import arabic_to_eng_number
 
 Config.use_graylog = "2"
 
@@ -26,21 +27,11 @@ logger = logger.get_logger()
 
 
 def success(bot, result):
-    print("success send message : ", result)
-
+    print("success sent message : ", result)
 
 def failure(bot, result):
     print("failure sent message : ", result)
 
-
-def arabic_to_eng_number(number):
-    number = str(number)
-    return number.translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789'))
-
-
-def eng_to_arabic_number(number):
-    number = str(number)
-    return number.translate(str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹'))
 
 
 main_menu_button = [
@@ -55,6 +46,7 @@ def get_pin_type_from_number(pin_number):
 
 
 @dispatcher.command_handler(["/start"])
+@dispatcher.message_handler([TemplateResponseFilter(keywords=["/start"]), TextFilter(keywords=["/start"])])
 def start_bot(bot, update):
     user_peer = update.get_effective_user()
     logger.info("receiving :  " + TextMessage("/start").get_json_str())
