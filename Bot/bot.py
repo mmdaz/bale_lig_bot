@@ -347,7 +347,7 @@ def send_each_field_winners():
     field = sort_by_special_field()
     # for f in field:
     #     print(f)
-    if current_time.day == LigBotConfig.report_delay:
+    if current_time.day == LigBotConfig.report_delay1 or current_time.day == LigBotConfig.report_delay2 :
         send_winner_report(bot)
         winners = sort_by_special_field()[0]
         message = Message.LEARNING + "\n\n\n"
@@ -407,7 +407,7 @@ def send_each_field_winners():
         reset_date()
         logger.info("Ranking of each field sent. ")
         loop.call_later(86300, send_each_field_winners)
-    elif current_time.day != LigBotConfig.report_delay:
+    elif current_time.day != LigBotConfig.report_delay1 and current_time.day != LigBotConfig.report_delay2:
         loop.call_later(86300, send_each_field_winners)
 
 

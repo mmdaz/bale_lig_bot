@@ -20,7 +20,8 @@ services:
       - POSTGRES_PASSWORD=
       - POSTGRES_USER=
       - BOT_TOKEN=
-      - REPORT_DELAY=
+      - REPORT_DELAY1=
+      - REPORT_DELAY2=
       - GROUP_ID=
       - GROUP_ACCESS_HASH=
       - ADMIN_USER_ID=
