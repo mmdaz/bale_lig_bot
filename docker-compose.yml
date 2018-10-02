@@ -1,7 +1,7 @@
 version: '3.4'
 services:
   pg_bot_server:
-    image: registry.bale.ai:2443/balepostgres:1.6.0
+    image: registry2.bale.ai:2443/balepostgres:1.6.0
     container_name: "postgresql"
     restart: always
     environment:
@@ -12,7 +12,8 @@ services:
 
 
   app:
-    build: .
+    image: "registry2.bale.ai:2443/ligbot:0.0-0"
+#    build: .
     hostname: ligbot
     container_name: ligbot
     environment:

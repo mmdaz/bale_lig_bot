@@ -11,4 +11,5 @@ multidict==4.4.0
 ORM==1.1.0
 psycopg2==2.7.5
 SQLAlchemy==1.2.11
+utils==0.9.0
 yarl==1.2.6

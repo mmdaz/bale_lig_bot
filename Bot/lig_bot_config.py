@@ -11,4 +11,4 @@ class LigBotConfig:
     report_delay1 = int(os.environ.get('REPORT_DELAY1', None) or 15)
     report_delay2 = int(os.environ.get('REPORT_DELAY2', None) or 1)
     bot_token = os.environ.get('BOT_TOKEN', None) or "4da1a22c3bd8f29afcc59fdcc82721c901134f1a"
-    db_host = os.environ.get('DB_HOST', None) or "postgresql"
+    db_host = os.environ.get('DB_HOST', None) or "localhost"

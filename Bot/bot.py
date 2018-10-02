@@ -4,7 +4,7 @@ from balebot.models.messages import TemplateMessage, TemplateMessageButton, Text
 import asyncio
 from balebot.utils.logger import Logger
 from Bot.template_messages import Message
-from balebot.handlers import MessageHandler
+from balebot.handlers import MessageHandler, CommandHandler
 from balebot.filters import TemplateResponseFilter, TextFilter
 from Database.operations import *
 from Bot.models import Person, Reason
@@ -76,7 +76,8 @@ def start_bot(bot, update):
         MessageHandler(TemplateResponseFilter(keywords=["/pin_number"]), send_pin_number),
         MessageHandler(TemplateResponseFilter(keywords=["/give_pin"]), give_pin),
         MessageHandler(TemplateResponseFilter(keywords=["/add_person"]), start_register_conversation),
-        MessageHandler(TemplateResponseFilter(keywords=["/delete_person"]), delete_person)
+        MessageHandler(TemplateResponseFilter(keywords=["/delete_person"]), delete_person),
+        MessageHandler(TextFilter(keywords=["/start"]), start_bot)
     ])
 
 
@@ -113,14 +114,14 @@ def give_pin(bot, update):
     for person in persons_list:
         message_text += "{} - {}   {}\n".format(persons_list.index(person) + 1, person.first_name, person.last_name)
 
-
     bot.send_message(TemplateMessage(TextMessage(message_text), start_menu_button), user_peer, success_callback=success,
                      failure_callback=failure)
     # bot.send_message(TextMessage(message_text), user_peer, success_callback=success, failure_callback=failure)
-    dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_person_number),
+    dispatcher.register_conversation_next_step_handler(update, [MessageHandler([TextFilter()], get_person_number),
                                                                 MessageHandler(
                                                                     TemplateResponseFilter(keywords="/start"),
-                                                                    start_bot)])
+                                                                    start_bot),
+                                                                CommandHandler(["/start"], start_bot)])
 
 
 def get_person_number(bot, update):
@@ -128,85 +129,133 @@ def get_person_number(bot, update):
     user_peer = update.get_effective_user()
     input = update.get_effective_message().text
     persons_list = dispatcher.get_conversation_data(update, "persons_list")
-    if input.isnumeric():
-        person_number = arabic_to_eng_number(input)
+    print(len(persons_list))
+
+    if input == "/start":
+        start_bot(bot, update)
     else:
-        bot.send_message(TemplateMessage(Message.WRONG_ANSWER, start_menu_button), user_peer, success_callback=success,
-                         failure_callback=failure)
-        dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_person_number),
-                                                                    MessageHandler(
-                                                                        TemplateResponseFilter(keywords=["/start"]),
-                                                                        start_bot)])
-    if check_person_validation(user_peer.get_json_object()["id"], persons_list[int(person_number) - 1].id):
-        dispatcher.set_conversation_data(update, "person_number", int(person_number) - 1)
-        pin_buttons_list = [
-            TemplateMessageButton(Message.LEARNING, "/1", 0),
-            TemplateMessageButton(Message.HARDWORKING, "/2", 0),
-            TemplateMessageButton(Message.RESPONSIBILITI, "/3", 0),
-            TemplateMessageButton(Message.TEAMWORKING, "/4", 0),
-            TemplateMessageButton(Message.PRODUCT_CONCERN, "/5", 0),
-            TemplateMessageButton(Message.OTHER, "/6", 0),
-            start_menu_button[0]
-        ]
-        bot.send_message(TemplateMessage(Message.WHAT_PIN, pin_buttons_list), user_peer, success_callback=success,
-                         failure_callback=failure)
-        dispatcher.register_conversation_next_step_handler(update, [
-            MessageHandler(TemplateResponseFilter(["/1"]), get_pin_type),
-            MessageHandler(TemplateResponseFilter(["/2"]), get_pin_type),
-            MessageHandler(TemplateResponseFilter(["/3"]), get_pin_type),
-            MessageHandler(TemplateResponseFilter(["/4"]), get_pin_type),
-            MessageHandler(TemplateResponseFilter(["/5"]), get_pin_type),
-            MessageHandler(TemplateResponseFilter(["/6"]), get_pin_type),
-            MessageHandler(TemplateResponseFilter("/start"), start_bot)
-        ]
-                                                           )
-    else:
-        bot.send_message(TemplateMessage(Message.WRONG_ANSWER, start_menu_button), user_peer, success_callback=success,
-                         failure_callback=failure)
-        logger.info("")
-        dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_person_number),
-                                                                    MessageHandler(
-                                                                        TemplateResponseFilter(keywords="/start"),
-                                                                        start_bot)])
+        if input.isnumeric():
+            person_number = arabic_to_eng_number(input)
+            if int(person_number) <= len(persons_list):
+
+                if check_person_validation(user_peer.get_json_object()["id"],
+                                           persons_list[int(person_number) - 1].id) and input.isnumeric() and int(
+                    input) <= len(persons_list):
+                    dispatcher.set_conversation_data(update, "person_number", int(person_number) - 1)
+                    pin_buttons_list = [
+                        TemplateMessageButton(Message.LEARNING, "/1", 0),
+                        TemplateMessageButton(Message.HARDWORKING, "/2", 0),
+                        TemplateMessageButton(Message.RESPONSIBILITI, "/3", 0),
+                        TemplateMessageButton(Message.TEAMWORKING, "/4", 0),
+                        TemplateMessageButton(Message.PRODUCT_CONCERN, "/5", 0),
+                        TemplateMessageButton(Message.OTHER, "/6", 0),
+                        start_menu_button[0]
+                    ]
+                    bot.send_message(TemplateMessage(Message.WHAT_PIN, pin_buttons_list), user_peer,
+                                     success_callback=success,
+                                     failure_callback=failure)
+                    dispatcher.register_conversation_next_step_handler(update, [
+                        MessageHandler(TemplateResponseFilter(["/1"]), get_pin_type),
+                        MessageHandler(TemplateResponseFilter(["/2"]), get_pin_type),
+                        MessageHandler(TemplateResponseFilter(["/3"]), get_pin_type),
+                        MessageHandler(TemplateResponseFilter(["/4"]), get_pin_type),
+                        MessageHandler(TemplateResponseFilter(["/5"]), get_pin_type),
+                        MessageHandler(TemplateResponseFilter(["/6"]), get_pin_type),
+                        MessageHandler(TemplateResponseFilter("/start"), start_bot),
+                        CommandHandler(["/start"], start_bot)
+                    ])
+                else:
+                    bot.send_message(TemplateMessage(Message.WRONG_ANSWER, start_menu_button), user_peer,
+                                     success_callback=success,
+                                     failure_callback=failure)
+                    dispatcher.register_conversation_next_step_handler(update, handlers=[
+                        MessageHandler(TextFilter(), get_person_number),
+                        MessageHandler(
+                            TemplateResponseFilter(keywords="/start"),
+                            start_bot), CommandHandler(["/start"], start_bot)])
+            else:
+                bot.send_message(TemplateMessage(Message.WRONG_ANSWER, start_menu_button), user_peer,
+                                 success_callback=success,
+                                 failure_callback=failure)
+                dispatcher.register_conversation_next_step_handler(update, handlers=[
+                    MessageHandler(TextFilter(), get_person_number),
+                    MessageHandler(
+                        TemplateResponseFilter(keywords="/start"),
+                        start_bot), CommandHandler(["/start"], start_bot)])
+
+        else:
+            print("WRONG_ANSWERrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr")
+            bot.send_message(TemplateMessage(Message.WRONG_ANSWER, start_menu_button), user_peer,
+                             success_callback=success,
+                             failure_callback=failure)
+            dispatcher.register_conversation_next_step_handler(update, handlers=[
+                MessageHandler(TextFilter(), get_person_number),
+                MessageHandler(
+                    TemplateResponseFilter(keywords="/start"),
+                    start_bot),
+                CommandHandler(["/start"], start_bot)])
 
 
 def get_pin_type(bot, update):
     user_peer = update.get_effective_user()
     pin_type_number = int(update.get_effective_message().text_message[1])
     dispatcher.set_conversation_data(update, "pin_type_number", pin_type_number)
-    bot.send_message(TemplateMessage(Message.HOW_MANY_PINS, start_menu_button), user_peer, success_callback=success, failure_callback=failure)
+    bot.send_message(TemplateMessage(Message.HOW_MANY_PINS, start_menu_button), user_peer, success_callback=success,
+                     failure_callback=failure)
     # bot.send_message(start_menu_template_message, user_peer, success_callback=success, failure_callback=failure)
     dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_numbers_of_pins),
                                                                 MessageHandler(
                                                                     TemplateResponseFilter(keywords="/start"),
-                                                                    start_bot)])
+                                                                    start_bot),
+                                                                CommandHandler(["/start"], start_bot)])
+
+
+def test(bot, update):
+    user = update.get_effective_user()
+    print("testtttttttttt")
 
 
 def get_numbers_of_pins(bot, update):
     number = 0
     user_peer = update.get_effective_user()
     input = update.get_effective_message().text
-    if input.isnumeric():
-        input = arabic_to_eng_number(input)
-        number = int(input)
-    else:
-        bot.send_message(TemplateMessage(Message.WRONG_ANSWER, start_menu_button), user_peer, success_callback=success,
-                         failure_callback=failure)
-        dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_numbers_of_pins),
-                                                                    MessageHandler(
-                                                                        TemplateResponseFilter(keywords=["/start"]),
-                                                                        start_bot)])
-    if check_pins_limitation(user_peer.get_json_object()["id"], number):
-        dispatcher.set_conversation_data(update, "numbers", number)
-        bot.send_message(TemplateMessage(Message.GET_REASON, start_menu_button), user_peer, success_callback=success,
-                         failure_callback=failure)
-        dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_reason),
-                                                                    MessageHandler(
-                                                                        TemplateResponseFilter(keywords=["/start"]),
-                                                                        start_bot)])
-    else:
-        bot.send_message(Message.END_PINS, user_peer, success_callback=success, failure_callback=failure)
+    if input == "/start":
         start_bot(bot, update)
+    else:
+        if input.isnumeric():
+            input = arabic_to_eng_number(input)
+            number = int(input)
+            if check_pins_limitation(user_peer.get_json_object()["id"], number) and input.isnumeric():
+                dispatcher.set_conversation_data(update, "numbers", number)
+                bot.send_message(TemplateMessage(Message.GET_REASON, start_menu_button), user_peer,
+                                 success_callback=success,
+                                 failure_callback=failure)
+                dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_reason),
+                                                                            MessageHandler(
+                                                                                TemplateResponseFilter(
+                                                                                    keywords=["/start"]),
+                                                                                start_bot),
+                                                                            CommandHandler(["/start"], start_bot)
+                                                                            ])
+            else:
+                bot.send_message(TemplateMessage(Message.END_PINS, start_menu_button), user_peer,
+                                 success_callback=success,
+                                 failure_callback=failure)
+                dispatcher.register_conversation_next_step_handler(update, [
+                    MessageHandler(TemplateResponseFilter(keywords=["/start"]),
+                                   CommandHandler("/start"))])
+
+        else:
+            bot.send_message(TemplateMessage(Message.WRONG_ANSWER, start_menu_button), user_peer,
+                             success_callback=success,
+                             failure_callback=failure)
+            dispatcher.register_conversation_next_step_handler(update,
+                                                               [MessageHandler(TextFilter(), get_numbers_of_pins),
+                                                                MessageHandler(
+                                                                    TemplateResponseFilter(keywords=["/start"]),
+                                                                    start_bot),
+                                                                CommandHandler(["/start"], start_bot)
+                                                                ])
 
 
 def get_reason(bot, update):
@@ -241,7 +290,8 @@ def verification(bot, update):
                      failure_callback=failure)
     dispatcher.register_conversation_next_step_handler(update, [
         MessageHandler(TemplateResponseFilter(keywords=["yes"]), save_pin),
-        MessageHandler(TemplateResponseFilter(keywords=["no"]), start_bot)
+        MessageHandler(TemplateResponseFilter(keywords=["no"]), start_bot),
+        CommandHandler(["/start"], start_bot)
     ])
 
 
@@ -295,7 +345,9 @@ def start_register_conversation(bot, update):
         dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_first_name),
                                                                     MessageHandler(
                                                                         TemplateResponseFilter(keywords="/start"),
-                                                                        start_bot)])
+                                                                        start_bot),
+                                                                    CommandHandler(["/start"], start_bot)
+                                                                    ])
     else:
         bot.send_message(Message.WRONG_ANSWER_FOR_REGISTER, user_peer, success_callback=success,
                          failure_callback=failure)
@@ -313,7 +365,7 @@ def get_first_name(bot, update):
     dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_last_name),
                                                                 MessageHandler(
                                                                     TemplateResponseFilter(keywords=["/start"]),
-                                                                    start_bot)])
+                                                                    start_bot), CommandHandler(["/start"], start_bot)])
 
 
 def get_last_name(bot, update):

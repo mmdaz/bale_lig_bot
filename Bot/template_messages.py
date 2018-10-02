@@ -18,7 +18,7 @@ class Message:
     GET_REASON = TextMessage("لطفا دلیل خود را برای این عمل بفرستید ...")
     HOW_MANY_PINS = TextMessage("چند تا پین میخوای بهش بدی ؟؟ ")
     GIVE_PIN_SUCCESS = TextMessage("پین  مورد نظر داده شد ... ")
-    END_PINS = TextMessage("پین های شما به اتمام رسیده است ...")
+    END_PINS = TextMessage("شما قادر به دادن این تعداد پین نیستید ...")
     WRONG_ANSWER = TextMessage("ورودی اشتباه است لطفا دوباره وارد نمایید ...")
     WRONG_ANSWER_FOR_REGISTER = TextMessage("شما قبلا ثبت نام کرده اید ... ")
     VERIFICATION = TextMessage("آیا اطمینان دارید ؟؟؟")
