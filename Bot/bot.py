@@ -210,11 +210,6 @@ def get_pin_type(bot, update):
                                                                 CommandHandler(["/start"], start_bot)])
 
 
-def test(bot, update):
-    user = update.get_effective_user()
-    print("testtttttttttt")
-
-
 def get_numbers_of_pins(bot, update):
     number = 0
     user_peer = update.get_effective_user()
@@ -222,7 +217,7 @@ def get_numbers_of_pins(bot, update):
     if input == "/start":
         start_bot(bot, update)
     else:
-        if input.isnumeric():
+        if input.isnumeric() and int(input) > 0:
             input = arabic_to_eng_number(input)
             number = int(input)
             if check_pins_limitation(user_peer.get_json_object()["id"], number) and input.isnumeric():
@@ -358,30 +353,36 @@ def start_register_conversation(bot, update):
 def get_first_name(bot, update):
     user_peer = update.get_effective_user()
     first_name = update.get_effective_message().text
-    logger.info("First name of user received. ")
-    dispatcher.set_conversation_data(update, "first_name", first_name)
-    bot.send_message(TemplateMessage(Message.GET_LAST_NAME, main_menu_button), user_peer, success_callback=success,
-                     failure_callback=failure)
-    dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_last_name),
-                                                                MessageHandler(
-                                                                    TemplateResponseFilter(keywords=["/start"]),
-                                                                    start_bot), CommandHandler(["/start"], start_bot)])
+    if first_name == "/start":
+        start_bot(bot, update)
+    else:
+        logger.info("First name of user received. ")
+        dispatcher.set_conversation_data(update, "first_name", first_name)
+        bot.send_message(TemplateMessage(Message.GET_LAST_NAME, main_menu_button), user_peer, success_callback=success,
+                         failure_callback=failure)
+        dispatcher.register_conversation_next_step_handler(update, [MessageHandler(TextFilter(), get_last_name),
+                                                                    MessageHandler(
+                                                                        TemplateResponseFilter(keywords=["/start"]),
+                                                                        start_bot),
+                                                                    CommandHandler(["/start"], start_bot)])
 
 
 def get_last_name(bot, update):
     user_peer = update.get_effective_user()
     last_name = update.get_effective_message().text
-    logger.info("Last name of user received. ")
-    save_person(
-        Person(dispatcher.get_conversation_data(update, "first_name"), last_name, user_peer.get_json_object()["id"],
-               user_peer.get_json_object()["accessHash"]))
-    bot.send_message(Message.PERSON_ADDED, user_peer, success_callback=success, failure_callback=failure)
-    logger.info("A new user registered successfully .")
-    start_bot(bot, update)
-    dispatcher.finish_conversation(update)
+    if last_name == "/start":
+        start_bot(bot, update)
+    else:
+        logger.info("Last name of user received. ")
+        save_person(
+            Person(dispatcher.get_conversation_data(update, "first_name"), last_name, user_peer.get_json_object()["id"],
+                   user_peer.get_json_object()["accessHash"]))
+        bot.send_message(Message.PERSON_ADDED, user_peer, success_callback=success, failure_callback=failure)
+        logger.info("A new user registered successfully .")
+        start_bot(bot, update)
+        dispatcher.finish_conversation(update)
 
 
-@dispatcher.command_handler("/report_winner")
 def send_winner_report(bot):
     winners = sort_by_all_elements()
     message = Message.TOTAL_RANCKING + "\n\n\n*****************************\n\n"
@@ -397,9 +398,7 @@ def send_winner_report(bot):
 def send_each_field_winners():
     bot = dispatcher.bot
     current_time = jdatetime.datetime.now()
-    field = sort_by_special_field()
-    # for f in field:
-    #     print(f)
+    logger.info("System Time in daily checking:" + str(current_time))
     if current_time.day == LigBotConfig.report_delay1 or current_time.day == LigBotConfig.report_delay2:
         send_winner_report(bot)
         winners = sort_by_special_field()[0]

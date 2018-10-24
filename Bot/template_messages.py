@@ -30,7 +30,7 @@ class Message:
     NUMBER_OF_YOUR_PINS = "تعداد پین های شما در هر قسمت که دریافت کردید :‌"
     PIN_NUMBER = "تعداد پین : {}"
     REASON = "دلیل و توضیحات : {}"
-    Receiver = "گیرنده :‌ {}  {}"
+    Receiver = "گیرنده :{} {}"
     PIN_GIVER = "پین دهنده :{} {}"
     PIN_KIND = "نوع پین :‌{}"
     TOTAL_RANCKING = "رتبه بندی کلی لیگ برتر دمت گرم ..."

@@ -2,6 +2,13 @@ from Database.connect import *
 from Database.tables import Person, Reason
 
 
+def persian_sort(e):
+    print(e)
+    alphabet = "آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی"
+    alphabet += "absdefghigklmnopqrstuvwxyz"
+    return alphabet.index(e[0])
+
+
 def get_pin_numbers(user_id):
     session = session_factory()
     target_person = session.query(Person).filter_by(user_id=user_id).first()
@@ -15,6 +22,7 @@ def save_person(person_from_bot):
     session.commit()
     session.close()
 
+
 def is_registered(user_id):
     persons = get_all_persons()
     for person in persons:
@@ -23,13 +31,13 @@ def is_registered(user_id):
 
     return False
 
+
 def get_all_persons():
     session = session_factory()
-    persons_list = session.query(Person).all()
+    persons_list = session.query(Person).order_by(Person.last_name).all()
+    persons_list.sort(key=lambda p: persian_sort(str(p.last_name)), reverse=False)
     session.close()
     return persons_list
-
-
 
 
 def update_pins(id, pin_type, pin_numbers):
@@ -97,12 +105,23 @@ def check_person_validation(user_id, number_input):
 
 def sort_by_all_elements():
     persons = get_all_persons()
-    persons.sort(key=lambda p: p.total_pins , reverse=True)
+    persons.sort(key=lambda p: p.total_pins, reverse=True)
+    ranck_list = [persons[0]]
+    counter = 0
+    for i in range(1, len(persons)):
+        if counter > 2:
+            break
+        ranck_list.append(persons[i])
+        if persons[i].total_pins != persons[counter]:
+            counter += 1
+
+    print(len(ranck_list))
+
     persons_pins = [p.learning + p.hardworking + p.resposibility + p.teamworking + p.product_concern + p.other for p in
                     persons]
     sorted_list = [pin for pin in persons_pins]
     sorted_list.sort(reverse=True)
-    return persons
+    return ranck_list
 
 
 def sort_by_special_field():
@@ -110,17 +129,65 @@ def sort_by_special_field():
     persons_list = list(persons)
     fields = []
     persons_list.sort(key=lambda p: p.learning, reverse=True)
-    fields.append([p for p in persons_list])
+    ranck_list = [persons_list[0]]
+    counter = 0
+    for i in range(1, len(persons_list)):
+        if counter > 0:
+            break
+        ranck_list.append(persons_list[i])
+        if persons_list[0].learning != persons_list[i].learning:
+            counter += 1
+    fields.append([p for p in ranck_list])
     persons_list.sort(key=lambda p: p.hardworking, reverse=True)
-    fields.append([p for p in persons_list])
+    ranck_list = [persons_list[0]]
+    counter = 0
+    for i in range(1, len(persons_list)):
+        if counter > 0:
+            break
+        ranck_list.append(persons_list[i])
+        if persons_list[0].hardworking != persons_list[i].hardworking:
+            counter += 1
+    fields.append([p for p in ranck_list])
     persons_list.sort(key=lambda p: p.resposibility, reverse=True)
-    fields.append([p for p in persons_list])
+    ranck_list = [persons_list[0]]
+    counter = 0
+    for i in range(1, len(persons_list)):
+        if counter > 0:
+            break
+        ranck_list.append(persons_list[i])
+        if persons_list[0].resposibility != persons_list[i].resposibility:
+            counter += 1
+    fields.append([p for p in ranck_list])
     persons_list.sort(key=lambda p: p.teamworking, reverse=True)
-    fields.append([p for p in persons_list])
+    ranck_list = [persons_list[0]]
+    counter = 0
+    for i in range(1, len(persons_list)):
+        if counter > 0:
+            break
+        ranck_list.append(persons_list[i])
+        if persons_list[0].teamworking != persons_list[i].teamworking:
+            counter += 1
+    fields.append([p for p in ranck_list])
     persons_list.sort(key=lambda p: p.product_concern, reverse=True)
-    fields.append([p for p in persons_list])
+    ranck_list = [persons_list[0]]
+    counter = 0
+    for i in range(1, len(persons_list)):
+        if counter > 0:
+            break
+        ranck_list.append(persons_list[i])
+        if persons_list[0].product_concern != persons_list[i].product_concern:
+            counter += 1
+    fields.append([p for p in ranck_list])
     persons_list.sort(key=lambda p: p.other, reverse=True)
-    fields.append([p for p in persons_list])
+    ranck_list = [persons_list[0]]
+    counter = 0
+    for i in range(1, len(persons_list)):
+        if counter > 0:
+            break
+        ranck_list.append(persons_list[i])
+        if persons_list[0].other != persons_list[i].other:
+            counter += 1
+    fields.append([p for p in ranck_list])
 
     return fields
 
