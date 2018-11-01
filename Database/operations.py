@@ -35,7 +35,7 @@ def is_registered(user_id):
 def get_all_persons():
     session = session_factory()
     persons_list = session.query(Person).order_by(Person.last_name).all()
-    persons_list.sort(key=lambda p: persian_sort(str(p.last_name)), reverse=False)
+    # persons_list.sort(key=lambda p: persian_sort(str(p.last_name)), reverse=False)
     session.close()
     return persons_list
 

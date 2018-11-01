@@ -12,7 +12,7 @@ services:
 
 
   app:
-    image: "registry2.bale.ai:2443/ligbot:0.1-1"
+    image: "registry2.bale.ai:2443/ligbot:1.1-1"
 #    build: .
     hostname: ligbot
     container_name: ligbot
